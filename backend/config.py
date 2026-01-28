@@ -20,6 +20,7 @@ class Config:
     DATA_DIR: Path = BASE_DIR / "data"
     FRONTEND_DIR: Path = BASE_DIR / "frontend"
     CHECKLIST_FILE: Path = DATA_DIR / "A320_Normal_Checklist_2026.json"
+    TRAINING_CHECKLIST_FILE: Path = DATA_DIR / "A320_Training_Checklist.json"
     SETTINGS_FILE: Path = DATA_DIR / "settings.json"
 
 

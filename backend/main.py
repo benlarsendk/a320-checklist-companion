@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # Global instances
 simconnect = SimConnectClient()
-checklist_manager = ChecklistManager()
+checklist_manager = ChecklistManager(training_mode=settings_manager.settings.training_mode)
 websocket_manager = WebSocketManager()
 phase_detector = PhaseDetector()
 
@@ -126,6 +126,7 @@ class SetPhaseRequest(BaseModel):
 class SettingsRequest(BaseModel):
     simbrief_username: str = ""
     dark_mode: bool = False
+    training_mode: bool = False
 
 
 # REST API endpoints
@@ -288,10 +289,27 @@ async def get_settings():
 @app.post("/api/settings")
 async def save_settings(request: SettingsRequest):
     """Save settings."""
+    # Check if training mode changed
+    old_training_mode = settings_manager.settings.training_mode
+
     settings_manager.update(
         simbrief_username=request.simbrief_username,
-        dark_mode=request.dark_mode
+        dark_mode=request.dark_mode,
+        training_mode=request.training_mode
     )
+
+    # If training mode changed, reload checklists
+    if request.training_mode != old_training_mode:
+        checklist_manager.set_training_mode(request.training_mode)
+        # Broadcast updated state
+        await websocket_manager.send_state_update(
+            connected=simconnect.connected,
+            flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+            checklist_state=checklist_manager.get_state_dict(),
+            auto_transition=config.AUTO_PHASE_TRANSITION,
+            flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
+        )
+
     return {"success": True, "settings": settings_manager.settings.model_dump()}
 
 

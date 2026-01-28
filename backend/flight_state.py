@@ -32,6 +32,7 @@ CHECKLIST_PHASES = [
     Phase.AFTER_START,
     Phase.TAXI,
     Phase.LINE_UP,
+    Phase.CRUISE,  # Training checklist includes cruise
     Phase.APPROACH,
     Phase.LANDING,
     Phase.AFTER_LANDING,

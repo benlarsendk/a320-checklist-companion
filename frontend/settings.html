@@ -38,6 +38,20 @@
                 </div>
             </section>
 
+            <!-- Checklist Section -->
+            <section class="settings-section">
+                <h2 class="settings-section-title">Checklist Type</h2>
+
+                <div class="settings-field">
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="training-mode-toggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Training Checklists</span>
+                    </label>
+                    <p class="settings-hint">Extended checklists with more detailed items for training purposes. Based on FlyUK A320 checklist.</p>
+                </div>
+            </section>
+
             <!-- SimBrief Section -->
             <section class="settings-section">
                 <h2 class="settings-section-title">SimBrief Integration</h2>
@@ -129,6 +143,7 @@
             constructor() {
                 this.elements = {
                     darkModeToggle: document.getElementById('dark-mode-toggle'),
+                    trainingModeToggle: document.getElementById('training-mode-toggle'),
                     simbriefUsername: document.getElementById('simbrief-username'),
                     btnSave: document.getElementById('btn-save'),
                     btnTest: document.getElementById('btn-test'),
@@ -159,6 +174,7 @@
 
             setupEventListeners() {
                 this.elements.darkModeToggle.addEventListener('change', () => this.toggleDarkMode());
+                this.elements.trainingModeToggle.addEventListener('change', () => this.toggleTrainingMode());
                 this.elements.btnSave.addEventListener('click', () => this.saveSettings());
                 this.elements.btnTest.addEventListener('click', () => this.testConnection());
                 this.elements.btnFetch.addEventListener('click', () => this.fetchFlightPlan());
@@ -171,6 +187,7 @@
                     const settings = await response.json();
                     this.elements.simbriefUsername.value = settings.simbrief_username || '';
                     this.elements.darkModeToggle.checked = settings.dark_mode || false;
+                    this.elements.trainingModeToggle.checked = settings.training_mode || false;
                     this.applyDarkMode(settings.dark_mode);
                 } catch (e) {
                     console.error('Failed to load settings:', e);
@@ -192,6 +209,7 @@
             async saveSettings() {
                 const username = this.elements.simbriefUsername.value.trim();
                 const darkMode = this.elements.darkModeToggle.checked;
+                const trainingMode = this.elements.trainingModeToggle.checked;
 
                 try {
                     const response = await fetch('/api/settings', {
@@ -199,7 +217,8 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             simbrief_username: username,
-                            dark_mode: darkMode
+                            dark_mode: darkMode,
+                            training_mode: trainingMode
                         }),
                     });
 
@@ -295,6 +314,11 @@
                 const darkMode = this.elements.darkModeToggle.checked;
                 this.applyDarkMode(darkMode);
                 await this.saveSettings();
+            }
+
+            async toggleTrainingMode() {
+                await this.saveSettings();
+                this.showStatus(this.elements.settingsStatus, 'Checklists reloaded!', 'success');
             }
 
             applyDarkMode(enabled) {

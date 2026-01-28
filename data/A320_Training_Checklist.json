@@ -1,0 +1,223 @@
+{
+  "aircraft": "Airbus A320/A321",
+  "revision": "UKV-PRD-A320-CHECKLIST-V4",
+  "source": "FlyUK Training Checklist",
+  "phases": {
+    "departure": [
+      {
+        "id": "cockpit_preparation",
+        "title": "PRE START",
+        "trigger": "Before engine start",
+        "items": [
+          {"id": "parking_brake", "challenge": "Parking Brake", "response": "SET"},
+          {"id": "chocks", "challenge": "Chocks", "response": "REMOVED"},
+          {"id": "gpu", "challenge": "GPU", "response": "CONNECTED"},
+          {"id": "throttle", "challenge": "Throttle", "response": "THRUST LEVERS IDLE"},
+          {"id": "engine_masters", "challenge": "Engine Masters", "response": "OFF"},
+          {"id": "batteries", "challenge": "Batteries", "response": "ON"},
+          {"id": "generator_switches", "challenge": "Generator Switches", "response": "ON"},
+          {"id": "ext_power", "challenge": "Ext Power", "response": "ON"},
+          {"id": "adirs", "challenge": "ADIRS", "response": "SET TO NAV"},
+          {"id": "panel_displays", "challenge": "Panel Displays", "response": "BRIGHTNESS SET"},
+          {"id": "nav_lights", "challenge": "Nav Lights", "response": "ON"},
+          {"id": "panel_lights", "challenge": "Panel Lights", "response": "ON if required"},
+          {"id": "landing_gear_lever", "challenge": "Landing Gear Lever", "response": "CHECK DOWN"},
+          {"id": "flaps", "challenge": "Flaps", "response": "UP"},
+          {"id": "spoiler", "challenge": "Spoiler", "response": "RETRACTED"},
+          {"id": "fuel", "challenge": "Fuel Quantity", "response": "___KG CHECK"},
+          {"id": "fasten_seat_belts", "challenge": "Fasten Seat Belts", "response": "ON"},
+          {"id": "no_smoking", "challenge": "No Smoking Signs", "response": "ON"},
+          {"id": "de_ice", "challenge": "De-Ice", "response": "TEST / CHECK"},
+          {"id": "transponder", "challenge": "Transponder", "response": "SET, STANDBY"},
+          {"id": "beacon_lights", "challenge": "Beacon Lights", "response": "ON"},
+          {"id": "emergency_lights", "challenge": "Emergency Lights", "response": "ARM"},
+          {"id": "fmc", "challenge": "FMC", "response": "SETUP, CHECK"},
+          {"id": "departure_briefing", "challenge": "Departure Briefing", "response": "COMPLETE"},
+          {"id": "doors", "challenge": "Doors", "response": "CLOSED"}
+        ]
+      },
+      {
+        "id": "before_start",
+        "title": "STARTUP",
+        "trigger": "Pushback clearance received",
+        "items": [
+          {"id": "apu", "challenge": "APU", "response": "START"},
+          {"id": "apu_bleed", "challenge": "APU Bleed", "response": "RUN"},
+          {"id": "apu_gen", "challenge": "APU Gen", "response": "ON / CHECK VOLTS"},
+          {"id": "thrust_levers", "challenge": "Thrust Levers", "response": "IDLE"},
+          {"id": "engine_area", "challenge": "Engine Area", "response": "CLEAR"},
+          {"id": "fuel_pumps", "challenge": "Fuel Pump Switches", "response": "ON"},
+          {"id": "mode_selector", "challenge": "Mode Selector", "response": "IGN / START"},
+          {"id": "eng1_master", "challenge": "Engine Master 1", "response": "START"},
+          {"id": "eng1_n2_fuel", "challenge": "At N2 > 20% Fuel Flow", "response": "CHECK ON"},
+          {"id": "eng1_n1", "challenge": "N1 Increasing as N2 Incr.", "response": "CHECK"},
+          {"id": "eng1_oil", "challenge": "Oil Pressure", "response": "CHECK"},
+          {"id": "eng1_gen", "challenge": "Generator Switch", "response": "ON"},
+          {"id": "eng2", "challenge": "Repeat for Engine 2", "response": "(ENG2)"},
+          {"id": "fuel_flow", "challenge": "Fuel Flow", "response": "CHECK"},
+          {"id": "hyd_pumps", "challenge": "Hydraulic Pump Switches", "response": "ON"},
+          {"id": "apu_off", "challenge": "APU", "response": "OFF"},
+          {"id": "mode_selector_norm", "challenge": "Mode Selector", "response": "NORM"}
+        ]
+      },
+      {
+        "id": "after_start",
+        "title": "BEFORE TAXI",
+        "trigger": "After engine start",
+        "items": [
+          {"id": "probe_window_heat", "challenge": "Probe/Window Heat", "response": "AUTO"},
+          {"id": "hdg_altimeters", "challenge": "HDG Indicator / Altimeters", "response": "___SET"},
+          {"id": "stdby_instruments", "challenge": "Stdby Instruments", "response": "SET"},
+          {"id": "radios_avionics", "challenge": "Radios and Avionics", "response": "SET FOR DEPARTURE"},
+          {"id": "autopilot", "challenge": "Autopilot", "response": "SET, don't activate"},
+          {"id": "fd", "challenge": "F/D", "response": "ON"},
+          {"id": "autobrake", "challenge": "Autobrake", "response": "MAX"},
+          {"id": "pitch_trim", "challenge": "Elevator Trim", "response": "___% SET FOR TAKE-OFF"},
+          {"id": "flight_controls", "challenge": "Flight Controls", "response": "FREE AND CORRECT"}
+        ]
+      },
+      {
+        "id": "taxi",
+        "title": "TAXI",
+        "trigger": "Taxi clearance received",
+        "items": [
+          {"id": "taxi_lights", "challenge": "Taxi Lights", "response": "ON"},
+          {"id": "parking_brake", "challenge": "Parking Brake", "response": "RELEASE"},
+          {"id": "taxi_speed", "challenge": "Taxi to Runway", "response": "SPEED Max 20 knots"},
+          {"id": "brks_gyro", "challenge": "Brks/Gyro/Turn Coordinator", "response": "CHECK during taxi"},
+          {"id": "to_config", "challenge": "T/O Config", "response": "DEPRESS / CHECK"},
+          {"id": "to_memo", "challenge": "T/O Memo", "response": "GREEN"}
+        ]
+      },
+      {
+        "id": "line_up",
+        "title": "BEFORE TAKE-OFF",
+        "trigger": "Holding short of runway",
+        "items": [
+          {"id": "parking_brake", "challenge": "Parking Brake", "response": "SET"},
+          {"id": "flight_instruments", "challenge": "Flight Instruments", "response": "CHECK"},
+          {"id": "engine_instruments", "challenge": "Engine Instruments", "response": "CHECK"},
+          {"id": "takeoff_data", "challenge": "Take-Off Data", "response": "(V1, VR, V2) CHECK"},
+          {"id": "nav_equipment", "challenge": "Nav Equipment", "response": "CHECK"},
+          {"id": "landing_lights", "challenge": "Landing Lights", "response": "ON"},
+          {"id": "strobe_light", "challenge": "Strobe Light", "response": "ON"},
+          {"id": "pitot_heat", "challenge": "Pitot Heat", "response": "AUTO"},
+          {"id": "de_ice", "challenge": "De-Ice", "response": "AS REQUIRED"},
+          {"id": "transponder", "challenge": "Transponder", "response": "TA/RA"}
+        ]
+      }
+    ],
+    "cruise": [
+      {
+        "id": "cruise",
+        "title": "CRUISE",
+        "trigger": "Reaching cruise altitude",
+        "items": [
+          {"id": "cruise_speed", "challenge": "Accelerate to Cruise Speed", "response": "SET"},
+          {"id": "engine_instruments", "challenge": "Engine & Instruments", "response": "MONITOR"},
+          {"id": "fuel_quantity", "challenge": "Fuel Quantity", "response": "CHECK"},
+          {"id": "radios", "challenge": "Radios", "response": "TUNED & SET"},
+          {"id": "autopilot", "challenge": "Autopilot", "response": "CHECK & SET"},
+          {"id": "lights", "challenge": "Lights", "response": "AS REQUIRED"},
+          {"id": "atis", "challenge": "ATIS / Airport Information", "response": "CHECK"},
+          {"id": "altimeter", "challenge": "Altimeter", "response": "CHECK"},
+          {"id": "de_ice", "challenge": "De-Ice", "response": "AS REQUIRED"},
+          {"id": "tod", "challenge": "TOD", "response": "SET TCAS TO BELOW"}
+        ]
+      }
+    ],
+    "arrival": [
+      {
+        "id": "approach",
+        "title": "APPROACH",
+        "trigger": "Approaching destination",
+        "items": [
+          {"id": "fasten_seat_belts", "challenge": "Fasten Seat Belts", "response": "ON"},
+          {"id": "radios", "challenge": "Radios", "response": "SET"},
+          {"id": "speed_210", "challenge": "Speed", "response": "ESTABLISH 210 KIAS"},
+          {"id": "landing_lights", "challenge": "Landing Lights", "response": "CHECK ON"},
+          {"id": "taxi_lights", "challenge": "Taxi Lights", "response": "ON"},
+          {"id": "gnd_spoilers", "challenge": "Gnd Spoilers", "response": "ARM"},
+          {"id": "auto_brake", "challenge": "Auto Brake", "response": "SET"},
+          {"id": "flaps_1", "challenge": "Flaps", "response": "FLAPS 1"},
+          {"id": "speed_180", "challenge": "Speed", "response": "ESTABLISH 180 KIAS"},
+          {"id": "flaps_2", "challenge": "At 6 DME", "response": "FLAPS 2"},
+          {"id": "speed_managed", "challenge": "Speed", "response": "MANAGED"},
+          {"id": "landing_gear", "challenge": "Landing Gear", "response": "DOWN"},
+          {"id": "gear_3_green", "challenge": "Landing Gear 3 Green", "response": "FLAPS 3"},
+          {"id": "flaps_full", "challenge": "Flaps", "response": "FULL"},
+          {"id": "speed_145", "challenge": "Final - Speed", "response": "ESTABLISH 145 KIAS"},
+          {"id": "parking_brake_off", "challenge": "Parking Brake", "response": "VERIFY OFF"},
+          {"id": "de_ice", "challenge": "De-Ice", "response": "AS REQUIRED"}
+        ]
+      },
+      {
+        "id": "landing",
+        "title": "LANDING",
+        "trigger": "On final approach",
+        "items": [
+          {"id": "landing_gear", "challenge": "Landing Gear", "response": "CHECK DOWN"},
+          {"id": "autopilot", "challenge": "Autopilot", "response": "AS REQUIRED"},
+          {"id": "go_around_alt", "challenge": "Go-Around Altitude", "response": "SET IN FCU"},
+          {"id": "auto_thrust", "challenge": "Auto-Thrust", "response": "AS REQUIRED"},
+          {"id": "landing_memo", "challenge": "Landing Memo", "response": "NO BLUE"},
+          {"id": "landing_speed", "challenge": "Landing Speed", "response": "MANAGED"},
+          {"id": "touchdown_reverse", "challenge": "After Touch Down", "response": "REVERSE THRUST"},
+          {"id": "spoilers_verify", "challenge": "Spoilers", "response": "VERIFY EXTENDED"},
+          {"id": "brakes", "challenge": "Brakes", "response": "AS REQUIRED"},
+          {"id": "60kts_reverse", "challenge": "At 60 KIAS", "response": "CANCEL REVERSE THRUST"}
+        ]
+      },
+      {
+        "id": "after_landing",
+        "title": "AFTER LANDING",
+        "trigger": "Runway vacated",
+        "items": [
+          {"id": "spoilers", "challenge": "Spoilers", "response": "DISARMED"},
+          {"id": "flaps", "challenge": "Flaps", "response": "RETRACT"},
+          {"id": "eng_mode", "challenge": "Eng Mode Selector", "response": "NORM"},
+          {"id": "landing_lights", "challenge": "Landing Lights", "response": "OFF"},
+          {"id": "strobe_lights", "challenge": "Strobe Lights", "response": "OFF"},
+          {"id": "anti_ice", "challenge": "Anti Ice", "response": "AS REQUIRED"},
+          {"id": "apu", "challenge": "APU", "response": "START"},
+          {"id": "brake_temp", "challenge": "Brake Temp", "response": "CHECK"},
+          {"id": "transponder", "challenge": "Transponder", "response": "OFF"},
+          {"id": "apu_run", "challenge": "APU", "response": "START / CHECK RUN"},
+          {"id": "apu_gen", "challenge": "APU", "response": "GEN ON / CHECK VOLTS"},
+          {"id": "elevator_trim", "challenge": "Elevator Trim", "response": "TAKEOFF SETTING"},
+          {"id": "taxi_lights", "challenge": "Turning into Gate - Taxi Lights", "response": "OFF"}
+        ]
+      },
+      {
+        "id": "parking",
+        "title": "PARKING / SHUTDOWN",
+        "trigger": "At gate, engines running",
+        "items": [
+          {"id": "parking_brakes", "challenge": "Parking Brakes", "response": "SET"},
+          {"id": "thrust_levers", "challenge": "Thrust Levers", "response": "IDLE"},
+          {"id": "ground_contact", "challenge": "Ground Contact", "response": "ESTABLISH"},
+          {"id": "ground_ops", "challenge": "Ground Operations", "response": "AS REQUIRED (FMC2)"},
+          {"id": "electrical_power", "challenge": "Electrical Power", "response": "ESTABLISH"},
+          {"id": "engine_masters", "challenge": "Engine Master 1 & 2", "response": "OFF"},
+          {"id": "parking_brakes_2", "challenge": "Parking Brakes", "response": "AS REQUIRED"},
+          {"id": "nav_lights", "challenge": "Nav Lights", "response": "OFF"},
+          {"id": "exterior_lights", "challenge": "Exterior Lights", "response": "AS REQUIRED"},
+          {"id": "anti_ice", "challenge": "Anti Ice", "response": "OFF"},
+          {"id": "passenger_signs", "challenge": "Passenger Signs", "response": "OFF"},
+          {"id": "doors", "challenge": "Doors", "response": "OPEN"},
+          {"id": "flight_director", "challenge": "Flight Director", "response": "OFF"},
+          {"id": "apu_bleed", "challenge": "APU Bleed", "response": "AS REQUIRED"},
+          {"id": "fuel_pumps", "challenge": "Fuel Pumps", "response": "ALL OFF"},
+          {"id": "beacon", "challenge": "Beacon", "response": "OFF"},
+          {"id": "ecam_sts", "challenge": "ECAM STS", "response": "DEPRESS"},
+          {"id": "panel_lights", "challenge": "Panel Lights", "response": "OFF"},
+          {"id": "adirs", "challenge": "ADIRS", "response": "OFF"},
+          {"id": "avionics", "challenge": "Avionics", "response": "OFF"},
+          {"id": "no_smoking", "challenge": "No Smoking", "response": "OFF"},
+          {"id": "apu", "challenge": "APU", "response": "AS REQUIRED"},
+          {"id": "batteries", "challenge": "Batteries", "response": "AS REQUIRED"}
+        ]
+      }
+    ]
+  }
+}

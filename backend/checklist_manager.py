@@ -81,21 +81,28 @@ class Checklist:
 class ChecklistManager:
     """Manages all checklists and their state."""
 
-    def __init__(self):
+    def __init__(self, training_mode: bool = False):
         self.checklists: dict[str, Checklist] = {}
         self.current_phase: Phase = Phase.COCKPIT_PREPARATION
         self.phase_mode: str = "auto"  # "auto" or "manual"
         self.phase_history: list[str] = []
+        self.training_mode: bool = training_mode
         self._load_checklists()
 
     def _load_checklists(self):
-        """Load checklists from JSON file."""
+        """Load checklists from JSON file based on training mode."""
+        checklist_file = config.TRAINING_CHECKLIST_FILE if self.training_mode else config.CHECKLIST_FILE
         try:
-            with open(config.CHECKLIST_FILE, "r") as f:
+            with open(checklist_file, "r") as f:
                 data = json.load(f)
 
             # Load departure checklists
             for checklist_data in data["phases"].get("departure", []):
+                checklist = Checklist(checklist_data)
+                self.checklists[checklist.id] = checklist
+
+            # Load cruise checklists
+            for checklist_data in data["phases"].get("cruise", []):
                 checklist = Checklist(checklist_data)
                 self.checklists[checklist.id] = checklist
 
@@ -104,11 +111,24 @@ class ChecklistManager:
                 checklist = Checklist(checklist_data)
                 self.checklists[checklist.id] = checklist
 
-            logger.info(f"Loaded {len(self.checklists)} checklists")
+            mode_str = "training" if self.training_mode else "normal"
+            logger.info(f"Loaded {len(self.checklists)} checklists ({mode_str} mode)")
 
         except Exception as e:
             logger.error(f"Failed to load checklists: {e}")
             raise
+
+    def set_training_mode(self, enabled: bool):
+        """Switch between training and normal checklists."""
+        if self.training_mode != enabled:
+            self.training_mode = enabled
+            self.checklists.clear()
+            self._load_checklists()
+            # Reset to first phase
+            self.current_phase = Phase.COCKPIT_PREPARATION
+            self.phase_mode = "auto"
+            self.phase_history = []
+            logger.info(f"Switched to {'training' if enabled else 'normal'} checklists")
 
     def get_current_checklist(self) -> Optional[Checklist]:
         """Get the checklist for the current phase."""

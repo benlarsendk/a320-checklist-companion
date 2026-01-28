@@ -18,6 +18,7 @@ class Settings(BaseModel):
 
     simbrief_username: str = ""
     dark_mode: bool = False
+    training_mode: bool = False
 
 
 class SettingsManager:
