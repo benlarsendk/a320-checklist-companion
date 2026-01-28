@@ -1,165 +1,111 @@
 # A320 Checklist Companion
 
-A desktop checklist companion for the Airbus A320 in Microsoft Flight Simulator. Features automatic phase detection via SimConnect and flight plan integration with SimBrief.
+A checklist companion for the Airbus A320 in Microsoft Flight Simulator. Use it on your PC or scan the QR code to use on your phone/tablet.
+
+![Windows](https://img.shields.io/badge/Windows-10%2B-blue)
+![MSFS](https://img.shields.io/badge/MSFS-2020%20%7C%202024-green)
+
+## Getting Started
+
+### Download and Run (Recommended)
+
+1. **[Download the latest release](https://github.com/benlarsendk/a320-checklist-companion/releases/latest)**
+2. Extract the ZIP file
+3. Run `A320 Checklist Companion.exe`
+4. That's it! Use the checklist on your PC, or scan the QR code to use on your phone
+
+No installation required. No Python needed. Just extract and run.
+
+---
 
 ## Features
 
-- **Native Desktop App** - Runs as a Windows application with optional mobile access via QR code
-- **Interactive Checklists** - Tap to check off items, with visual feedback
-- **SimConnect Integration** - Automatic phase detection based on aircraft state
-- **SimBrief Integration** - Fetch your flight plan to populate fuel, baro settings, and route info
-- **Real-time Updates** - WebSocket-based live sync across devices
-- **Mobile-Friendly** - Use on your phone/tablet by scanning the QR code
-- **Training Mode** - Extended checklists with more detailed items for learning
-- **Dark Mode** - Optimized for low-light cockpit environments
-- **Auto-Verification** - Some items automatically verify against simulator state
+- **Works on any device** - Use on PC, or scan QR code for phone/tablet
+- **SimConnect Integration** - Auto-detects flight phase when MSFS is running
+- **SimBrief Integration** - Import your flight plan for accurate fuel/weight values
+- **Two Checklist Modes** - Normal (quick) or Training (detailed)
+- **Dark Mode** - Easy on the eyes for night flights
+- **Offline** - No internet required (except for SimBrief fetch)
 
-## Quick Start (Windows)
+## How to Use
 
-### Option 1: Download Release (Easiest)
+1. **Start the app** - You'll see a welcome screen with a QR code
+2. **Choose how to use it:**
+   - Click **"Open Checklist"** to use on your PC
+   - Or **scan the QR code** with your phone to use there
+3. **Go through your checklists** - Tap items to check them off
+4. **Use PREV/NEXT** to move between checklist phases
 
-1. Download the latest release from [Releases](https://github.com/benlarsendk/a320-checklist-companion/releases)
-2. Extract and run `A320 Checklist Companion.exe`
-3. Scan the QR code with your phone, or click "Open Checklist"
+### Optional: Connect SimBrief
 
-### Option 2: Run from Source
+1. Click the **gear icon** (settings)
+2. Enter your **SimBrief username**
+3. Click **Fetch Flight Plan**
+4. Your fuel and weight values will now appear in the checklist!
 
-1. Install [Python 3.10+](https://python.org)
-2. Clone or download this repository
-3. Double-click `run.bat` or run:
-   ```bash
-   pip install -r requirements.txt
-   python desktop_app.py
-   ```
+### Optional: MSFS Integration
 
-### Option 3: Build Your Own Executable
+Just have MSFS running - the app will automatically:
+- Connect and show "LIVE" status
+- Advance checklists based on your flight phase
+- Show actual vs expected values (e.g., fuel loaded vs planned)
 
-1. Install [Python 3.10+](https://python.org)
-2. Run `build.bat`
-3. Find the output in `dist\A320 Checklist Companion\`
+---
 
-## Screenshots
+## For Developers
 
-The UI shows:
-- Current checklist phase with trigger condition
-- Challenge/response format with dotted leader lines
-- SimBrief values highlighted (expected)
-- MSFS values shown alongside (actual) when connected
-- Flight plan banner with route and fuel
+### Run from Source
 
-## Usage
+```bash
+# Clone the repo
+git clone https://github.com/benlarsendk/a320-checklist-companion.git
+cd a320-checklist-companion
 
-### Basic Operation
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate  # Windows
+source venv/bin/activate  # Mac/Linux
 
-1. Launch the app - you'll see the welcome screen with QR code
-2. **On PC**: Click "Open Checklist on This Computer"
-3. **On Phone/Tablet**: Scan the QR code to access the checklist
-4. Navigate through checklists using **PREV** / **NEXT** buttons
-5. Tap items to mark them as checked
-6. Use **RESET** to clear all checklists and start over
+# Install dependencies
+pip install -r requirements.txt
 
-### Settings (Gear Icon)
+# Run the server
+python run.py
+```
 
-- **Dark Mode** - Toggle dark theme for night flying
-- **Training Checklists** - Extended checklists with more detailed items
-- **SimBrief Username** - Enter your username to fetch flight plans
-- **QR Code** - Scan to access on your phone
+Then open `http://localhost:2549` in your browser.
 
-### SimBrief Integration
+### Build the Executable
 
-1. Open Settings (gear icon)
-2. Enter your SimBrief username or Pilot ID
-3. Click **Save Settings**
-4. Click **Fetch Flight Plan** to load your latest OFP
-5. Return to the checklist - fuel and baro values are now populated
+```bash
+cd build
+build.bat
+```
 
-### SimConnect (MSFS)
+Output will be in `build/dist/A320 Checklist Companion/`
 
-When MSFS is running:
-- Connection status shows "LIVE" (green) when connected
-- Phase automatically advances based on aircraft state
-- Checklist items show actual vs expected values (e.g., `6,500 / 6,591 KG`)
-- Some items auto-verify (parking brake, gear, spoilers, etc.)
-
-## Configuration
-
-The server runs on port **2549** (RFC 2549 - IP over Avian Carriers 🐦).
-
-Edit `backend/config.py` to change:
-- `HOST` / `PORT` - Server binding (default: `0.0.0.0:2549`)
-- `SIMCONNECT_ENABLED` - Enable/disable SimConnect (default: `True`)
-- `AUTO_PHASE_TRANSITION` - Auto-advance phases (default: `True`)
+---
 
 ## Project Structure
 
 ```
-├── backend/
-│   ├── main.py              # FastAPI server & endpoints
-│   ├── checklist_manager.py # Checklist state management
-│   ├── simconnect_client.py # MSFS SimConnect integration
-│   ├── simbrief_client.py   # SimBrief API client
-│   ├── settings.py          # Persistent settings storage
-│   ├── flight_state.py      # Flight state & phase detection
-│   └── config.py            # Configuration
-├── frontend/
-│   ├── index.html           # Main checklist UI
-│   ├── welcome.html         # Welcome/QR code screen (exe only)
-│   ├── settings.html        # Settings page
-│   ├── app.js               # Frontend JavaScript
-│   └── styles.css           # Styling
-├── data/
-│   ├── A320_Normal_Checklist_2026.json   # Standard checklist
-│   └── A320_Training_Checklist.json      # Extended training checklist
-├── build/
-│   ├── build.bat            # Windows build script
-│   ├── build_requirements.txt  # Build environment dependencies
-│   ├── checklist.spec       # PyInstaller configuration
-│   └── installer.iss        # Inno Setup installer script
-├── desktop_app.py           # Desktop GUI launcher (with splash screen)
-├── run.py                   # CLI server launcher (no splash)
-└── run.bat                  # Quick-start for Windows
+├── backend/           # Python server (FastAPI)
+├── frontend/          # Web UI (HTML/CSS/JS)
+├── data/              # Checklist JSON files
+├── build/             # Build scripts for Windows exe
+├── run.py             # Start server (for developers)
+└── desktop_app.py     # Desktop app with welcome screen
 ```
 
-## Building
+## Configuration
 
-### Prerequisites
-
-- Python 3.10+
-- Windows (for building Windows exe)
-
-### Build Steps
-
-1. Open the `build` folder
-2. Run `build.bat` - this will:
-   - Create a separate virtual environment in `build/venv`
-   - Install all build dependencies
-   - Build the executable with PyInstaller
-
-3. Output will be in `build/dist/A320 Checklist Companion/`
-
-### Creating an Installer
-
-1. Install [Inno Setup](https://jrsoftware.org/isinfo.php)
-2. Open `build/installer.iss` in Inno Setup
-3. Compile to create the installer exe in `build/installer_output/`
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/state` | GET | Current flight & checklist state |
-| `/api/settings` | GET/POST | Get/save settings |
-| `/api/flightplan` | GET | Get cached flight plan |
-| `/api/flightplan/fetch` | POST | Fetch from SimBrief |
-| `/api/network-info` | GET | Get server IP for QR code |
-| `/ws` | WebSocket | Real-time state updates |
+The app runs on port **2549**. Edit `backend/config.py` to change settings.
 
 ## License
 
 MIT
 
-## Acknowledgments
+## Credits
 
-- Checklist based on Airbus A320 FCOM Normal Procedures
-- Training checklist based on FlyUK A320 checklist
-- Built with FastAPI, PyWebView, SimConnect, and vanilla JavaScript
+- Checklist based on Airbus A320 FCOM
+- Training checklist based on FlyUK A320 procedures
