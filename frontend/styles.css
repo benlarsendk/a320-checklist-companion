@@ -362,6 +362,9 @@ body {
     padding: var(--space-md) var(--space-lg);
     border-top: 1px solid var(--paper-shadow);
     background: var(--paper);
+    box-shadow: 0 -8px 16px -4px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 10;
 }
 
 .nav-btn {
@@ -799,6 +802,10 @@ body.dark-mode .settings-btn-primary {
 
 body.dark-mode .settings-btn-primary:hover:not(:disabled) {
     background: var(--ink);
+}
+
+body.dark-mode .nav-controls {
+    box-shadow: 0 -8px 16px -4px rgba(0,0,0,0.4);
 }
 
 body.dark-mode .nav-btn {
