@@ -174,6 +174,7 @@ class ChecklistApp {
                 <div class="item-checkbox">${checkmark}</div>
                 <div class="item-content">
                     <span class="item-challenge">${item.challenge}</span>
+                    <span class="item-dots"></span>
                     <span class="item-response">${response}</span>
                 </div>
             </li>
