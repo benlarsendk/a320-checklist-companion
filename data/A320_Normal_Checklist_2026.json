@@ -1,0 +1,129 @@
+{
+  "aircraft": "Airbus A320",
+  "revision": "2026-01",
+  "phases": {
+    "departure": [
+      {
+        "id": "cockpit_preparation",
+        "title": "COCKPIT PREPARATION",
+        "trigger": "Departure briefing completed",
+        "items": [
+          {"id": "gear_pins", "challenge": "Gear Pins & Covers", "response": "REMOVED", "verify": null},
+          {"id": "fuel", "challenge": "Fuel Quantity", "response": "___KG CHECKED", "verify": null},
+          {"id": "seat_belts", "challenge": "Seat Belts", "response": "ON", "verify": null},
+          {"id": "adirs", "challenge": "ADIRS", "response": "NAV", "verify": null},
+          {"id": "baro_ref", "challenge": "Baro Reference", "response": "___SET (BOTH)", "verify": null}
+        ]
+      },
+      {
+        "id": "before_start",
+        "title": "BEFORE START",
+        "trigger": "Pushback/Start clearance received",
+        "items": [
+          {"id": "parking_brake", "challenge": "Parking Brake", "response": "SET", "verify": {"var": "BRAKE_PARKING_POSITION", "condition": "eq", "value": true}},
+          {"id": "t_o_data", "challenge": "T.O. Data", "response": "SET", "verify": null},
+          {"id": "windows", "challenge": "Windows", "response": "CLOSED (BOTH)", "verify": null},
+          {"id": "beacon", "challenge": "Beacon", "response": "ON", "verify": {"var": "LIGHT_BEACON", "condition": "eq", "value": true}}
+        ]
+      },
+      {
+        "id": "after_start",
+        "title": "AFTER START",
+        "trigger": "Hand signal received from ground",
+        "items": [
+          {"id": "anti_ice", "challenge": "Anti Ice", "response": "AS RQRD", "verify": null},
+          {"id": "ecam_status", "challenge": "ECAM Status", "response": "CHECKED", "verify": null},
+          {"id": "pitch_trim", "challenge": "Pitch Trim", "response": "___% SET", "verify": null},
+          {"id": "rudder_trim", "challenge": "Rudder Trim", "response": "ZERO", "verify": null}
+        ]
+      },
+      {
+        "id": "taxi",
+        "title": "TAXI",
+        "trigger": "T.O. CONFIG pressed + Cabin report received",
+        "items": [
+          {"id": "flight_controls", "challenge": "Flight Controls", "response": "CHECKED (BOTH)", "verify": null},
+          {"id": "flight_instruments", "challenge": "Flight Instruments", "response": "CHECKED (BOTH)", "verify": null},
+          {"id": "briefing", "challenge": "Briefing", "response": "CONFIRMED", "verify": null},
+          {"id": "flaps", "challenge": "Flaps", "response": "T.O. (BOTH)", "verify": null},
+          {"id": "radar", "challenge": "Radar & Predictive W/S", "response": "ON", "verify": null},
+          {"id": "eng_mode", "challenge": "ENG MODE Selector", "response": "AS RQRD", "verify": null},
+          {"id": "ecam_memo", "challenge": "ECAM Memo", "response": "T.O. NO BLUE", "verify": null}
+        ]
+      },
+      {
+        "id": "line_up",
+        "title": "LINE-UP",
+        "trigger": "Line-up clearance received",
+        "items": [
+          {"id": "t_o_rwy", "challenge": "T.O. RWY", "response": "CONFIRMED", "verify": null},
+          {"id": "tcas", "challenge": "TCAS", "response": "TA/RA", "verify": {"var": "TRANSPONDER_STATE", "condition": "gte", "value": 3}},
+          {"id": "packs", "challenge": "Packs 1 & 2", "response": "AS RQRD", "verify": null}
+        ]
+      }
+    ],
+    "arrival": [
+      {
+        "id": "approach",
+        "title": "APPROACH",
+        "trigger": "Below 10,000 ft AAL + BARO REF set",
+        "items": [
+          {"id": "baro_ref_ldg", "challenge": "Baro Reference", "response": "___SET (BOTH)", "verify": null},
+          {"id": "seat_belts_appr", "challenge": "Seat Belts", "response": "ON", "verify": null},
+          {"id": "min", "challenge": "Minimum", "response": "___SET", "verify": null},
+          {"id": "auto_brake", "challenge": "Auto Brake", "response": "AS RQRD", "verify": null},
+          {"id": "eng_mode_appr", "challenge": "ENG MODE Selector", "response": "AS RQRD", "verify": null}
+        ]
+      },
+      {
+        "id": "landing",
+        "title": "LANDING",
+        "trigger": "LDG CONF set + Cabin report received",
+        "items": [
+          {"id": "ecam_memo_ldg", "challenge": "ECAM Memo", "response": "LDG NO BLUE", "verify": null},
+          {"id": "landing_gear", "challenge": "LDG Gear", "response": "DOWN", "verify": {"var": "GEAR_HANDLE_POSITION", "condition": "eq", "value": true}},
+          {"id": "spoilers_ldg", "challenge": "Spoilers", "response": "ARMED", "verify": {"var": "SPOILERS_ARMED", "condition": "eq", "value": true}}
+        ]
+      },
+      {
+        "id": "after_landing",
+        "title": "AFTER LANDING",
+        "trigger": "After landing flow completed",
+        "items": [
+          {"id": "flaps_retr", "challenge": "Flaps", "response": "RETRACTED", "verify": {"var": "TRAILING_EDGE_FLAPS_LEFT_PERCENT", "condition": "eq", "value": 0}},
+          {"id": "spoilers_disarm", "challenge": "Spoilers", "response": "DISARMED", "verify": {"var": "SPOILERS_ARMED", "condition": "eq", "value": false}},
+          {"id": "apu", "challenge": "APU", "response": "AS RQRD", "verify": null},
+          {"id": "radar_off", "challenge": "Radar & Predictive W/S", "response": "OFF", "verify": null},
+          {"id": "rudder_trim_ldg", "challenge": "Rudder Trim", "response": "ZERO", "verify": null}
+        ]
+      },
+      {
+        "id": "parking",
+        "title": "PARKING",
+        "trigger": "Seat Belts sign switched OFF",
+        "items": [
+          {"id": "parking_brake_park", "challenge": "Parking Brake", "response": "SET", "verify": {"var": "BRAKE_PARKING_POSITION", "condition": "eq", "value": true}},
+          {"id": "engines_park", "challenge": "Engines", "response": "OFF", "verify": null},
+          {"id": "seat_belts_off", "challenge": "Seat Belts", "response": "OFF", "verify": null},
+          {"id": "ext_lt_park", "challenge": "Exterior Lights", "response": "AS RQRD", "verify": null},
+          {"id": "fuel_pumps", "challenge": "Fuel Pumps", "response": "OFF", "verify": null},
+          {"id": "beacon_off", "challenge": "Beacon", "response": "OFF", "verify": {"var": "LIGHT_BEACON", "condition": "eq", "value": false}}
+        ]
+      },
+      {
+        "id": "securing",
+        "title": "SECURING THE AIRCRAFT",
+        "trigger": "Last passenger left",
+        "items": [
+          {"id": "adirs_off", "challenge": "ADIRS", "response": "OFF", "verify": null},
+          {"id": "oxygen", "challenge": "Oxygen", "response": "OFF", "verify": null},
+          {"id": "apu_bleed", "challenge": "APU Bleed", "response": "OFF", "verify": null},
+          {"id": "emer_exit_lt", "challenge": "EMER Exit Lt", "response": "OFF", "verify": null},
+          {"id": "no_smoking", "challenge": "NO SMOKING", "response": "OFF", "verify": null},
+          {"id": "apu_secure", "challenge": "APU", "response": "OFF", "verify": null},
+          {"id": "batteries", "challenge": "Batteries", "response": "OFF", "verify": null}
+        ]
+      }
+    ]
+  }
+}

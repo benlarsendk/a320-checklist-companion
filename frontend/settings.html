@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>Settings - A320 Checklist</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="/" class="back-link">&#9664; Back</a>
+            </div>
+            <div class="header-center">
+                <span class="header-title">SETTINGS</span>
+            </div>
+            <div class="header-right"></div>
+        </header>
+
+        <!-- Settings Content -->
+        <main class="settings-container">
+            <!-- SimBrief Section -->
+            <section class="settings-section">
+                <h2 class="settings-section-title">SimBrief Integration</h2>
+
+                <div class="settings-field">
+                    <label for="simbrief-username" class="settings-label">SimBrief Username</label>
+                    <input type="text"
+                           id="simbrief-username"
+                           class="settings-input"
+                           placeholder="Enter your SimBrief username or Pilot ID"
+                           autocomplete="off"
+                           autocapitalize="none">
+                    <p class="settings-hint">Your SimBrief username or Pilot ID is used to fetch your latest flight plan.</p>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="btn-save" class="settings-btn settings-btn-primary">
+                        Save Settings
+                    </button>
+                    <button id="btn-test" class="settings-btn settings-btn-secondary">
+                        Test Connection
+                    </button>
+                </div>
+
+                <div id="settings-status" class="settings-status hidden"></div>
+            </section>
+
+            <!-- Flight Plan Section -->
+            <section class="settings-section">
+                <h2 class="settings-section-title">Current Flight Plan</h2>
+
+                <div id="flightplan-empty" class="flightplan-empty">
+                    <p>No flight plan loaded</p>
+                    <p class="settings-hint">Fetch your latest flight plan from SimBrief to populate checklist values.</p>
+                </div>
+
+                <div id="flightplan-info" class="flightplan-info hidden">
+                    <div class="flightplan-route">
+                        <span id="fp-origin" class="fp-airport">----</span>
+                        <span class="fp-arrow">&#8594;</span>
+                        <span id="fp-destination" class="fp-airport">----</span>
+                    </div>
+
+                    <div class="flightplan-details">
+                        <div class="fp-detail">
+                            <span class="fp-label">Route</span>
+                            <span id="fp-route" class="fp-value fp-route-text">-</span>
+                        </div>
+                        <div class="fp-detail">
+                            <span class="fp-label">Block Fuel</span>
+                            <span id="fp-fuel" class="fp-value">-</span>
+                        </div>
+                        <div class="fp-detail">
+                            <span class="fp-label">ZFW</span>
+                            <span id="fp-zfw" class="fp-value">-</span>
+                        </div>
+                        <div class="fp-detail">
+                            <span class="fp-label">TOW</span>
+                            <span id="fp-tow" class="fp-value">-</span>
+                        </div>
+                        <div class="fp-detail">
+                            <span class="fp-label">Cruise Alt</span>
+                            <span id="fp-altitude" class="fp-value">-</span>
+                        </div>
+                        <div class="fp-detail">
+                            <span class="fp-label">Cost Index</span>
+                            <span id="fp-ci" class="fp-value">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-actions">
+                    <button id="btn-fetch" class="settings-btn settings-btn-primary">
+                        Fetch Flight Plan
+                    </button>
+                    <button id="btn-clear" class="settings-btn settings-btn-secondary">
+                        Clear
+                    </button>
+                </div>
+
+                <div id="flightplan-status" class="settings-status hidden"></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Settings page functionality
+        class SettingsPage {
+            constructor() {
+                this.elements = {
+                    simbriefUsername: document.getElementById('simbrief-username'),
+                    btnSave: document.getElementById('btn-save'),
+                    btnTest: document.getElementById('btn-test'),
+                    btnFetch: document.getElementById('btn-fetch'),
+                    btnClear: document.getElementById('btn-clear'),
+                    settingsStatus: document.getElementById('settings-status'),
+                    flightplanStatus: document.getElementById('flightplan-status'),
+                    flightplanEmpty: document.getElementById('flightplan-empty'),
+                    flightplanInfo: document.getElementById('flightplan-info'),
+                    fpOrigin: document.getElementById('fp-origin'),
+                    fpDestination: document.getElementById('fp-destination'),
+                    fpRoute: document.getElementById('fp-route'),
+                    fpFuel: document.getElementById('fp-fuel'),
+                    fpZfw: document.getElementById('fp-zfw'),
+                    fpTow: document.getElementById('fp-tow'),
+                    fpAltitude: document.getElementById('fp-altitude'),
+                    fpCi: document.getElementById('fp-ci'),
+                };
+
+                this.init();
+            }
+
+            async init() {
+                this.setupEventListeners();
+                await this.loadSettings();
+                await this.loadFlightPlan();
+            }
+
+            setupEventListeners() {
+                this.elements.btnSave.addEventListener('click', () => this.saveSettings());
+                this.elements.btnTest.addEventListener('click', () => this.testConnection());
+                this.elements.btnFetch.addEventListener('click', () => this.fetchFlightPlan());
+                this.elements.btnClear.addEventListener('click', () => this.clearFlightPlan());
+            }
+
+            async loadSettings() {
+                try {
+                    const response = await fetch('/api/settings');
+                    const settings = await response.json();
+                    this.elements.simbriefUsername.value = settings.simbrief_username || '';
+                } catch (e) {
+                    console.error('Failed to load settings:', e);
+                }
+            }
+
+            async loadFlightPlan() {
+                try {
+                    const response = await fetch('/api/flightplan');
+                    const data = await response.json();
+                    if (data.success && data.flight_plan) {
+                        this.displayFlightPlan(data.flight_plan);
+                    }
+                } catch (e) {
+                    console.error('Failed to load flight plan:', e);
+                }
+            }
+
+            async saveSettings() {
+                const username = this.elements.simbriefUsername.value.trim();
+
+                try {
+                    const response = await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ simbrief_username: username }),
+                    });
+
+                    if (response.ok) {
+                        this.showStatus(this.elements.settingsStatus, 'Settings saved!', 'success');
+                    } else {
+                        this.showStatus(this.elements.settingsStatus, 'Failed to save settings', 'error');
+                    }
+                } catch (e) {
+                    this.showStatus(this.elements.settingsStatus, 'Network error', 'error');
+                }
+            }
+
+            async testConnection() {
+                const username = this.elements.simbriefUsername.value.trim();
+                if (!username) {
+                    this.showStatus(this.elements.settingsStatus, 'Enter a username first', 'error');
+                    return;
+                }
+
+                // Save first, then fetch
+                await this.saveSettings();
+                await this.fetchFlightPlan();
+            }
+
+            async fetchFlightPlan() {
+                this.elements.btnFetch.disabled = true;
+                this.elements.btnFetch.textContent = 'Fetching...';
+
+                try {
+                    const response = await fetch('/api/flightplan/fetch', { method: 'POST' });
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        this.displayFlightPlan(data.flight_plan);
+                        this.showStatus(this.elements.flightplanStatus, 'Flight plan loaded!', 'success');
+                    } else {
+                        const detail = data.detail || 'Failed to fetch flight plan';
+                        this.showStatus(this.elements.flightplanStatus, detail, 'error');
+                    }
+                } catch (e) {
+                    this.showStatus(this.elements.flightplanStatus, 'Network error', 'error');
+                } finally {
+                    this.elements.btnFetch.disabled = false;
+                    this.elements.btnFetch.textContent = 'Fetch Flight Plan';
+                }
+            }
+
+            async clearFlightPlan() {
+                try {
+                    await fetch('/api/flightplan/clear', { method: 'POST' });
+                    this.hideFlightPlan();
+                    this.showStatus(this.elements.flightplanStatus, 'Flight plan cleared', 'success');
+                } catch (e) {
+                    this.showStatus(this.elements.flightplanStatus, 'Failed to clear', 'error');
+                }
+            }
+
+            displayFlightPlan(fp) {
+                this.elements.flightplanEmpty.classList.add('hidden');
+                this.elements.flightplanInfo.classList.remove('hidden');
+
+                this.elements.fpOrigin.textContent = fp.origin || '----';
+                this.elements.fpDestination.textContent = fp.destination || '----';
+                this.elements.fpRoute.textContent = fp.route || '-';
+                this.elements.fpFuel.textContent = this.formatNumber(fp.fuel_block) + ' ' + fp.fuel_units;
+                this.elements.fpZfw.textContent = this.formatNumber(fp.zfw) + ' ' + fp.weight_units;
+                this.elements.fpTow.textContent = this.formatNumber(fp.tow) + ' ' + fp.weight_units;
+                this.elements.fpAltitude.textContent = fp.cruise_altitude ? 'FL' + fp.cruise_altitude : '-';
+                this.elements.fpCi.textContent = fp.cost_index || '-';
+            }
+
+            hideFlightPlan() {
+                this.elements.flightplanEmpty.classList.remove('hidden');
+                this.elements.flightplanInfo.classList.add('hidden');
+            }
+
+            formatNumber(num) {
+                return num ? num.toLocaleString() : '-';
+            }
+
+            showStatus(element, message, type) {
+                element.textContent = message;
+                element.className = 'settings-status ' + type;
+                element.classList.remove('hidden');
+
+                setTimeout(() => {
+                    element.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new SettingsPage();
+        });
+    </script>
+</body>
+</html>

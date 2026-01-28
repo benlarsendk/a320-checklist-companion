@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>A320 Checklist</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="header-icon">&#9992;</span>
+                <span class="header-title">A320 CHECKLIST</span>
+            </div>
+            <div class="header-right">
+                <span id="connection-status" class="status-indicator disconnected">
+                    <span class="status-dot"></span>
+                    <span class="status-text">MANUAL</span>
+                </span>
+                <a href="/settings" class="settings-link" title="Settings">&#9881;</a>
+            </div>
+        </header>
+
+        <!-- Phase Header -->
+        <div class="phase-header">
+            <div class="phase-title" id="phase-title">COCKPIT PREP</div>
+            <div class="phase-trigger" id="phase-trigger">Departure briefing completed</div>
+        </div>
+
+        <!-- Flight Plan Banner (shown when flight plan is loaded) -->
+        <div id="flightplan-banner" class="flightplan-banner hidden">
+            <span id="banner-route" class="banner-route">---- &#8594; ----</span>
+            <span id="banner-fuel" class="banner-fuel">FUEL: --</span>
+        </div>
+
+        <!-- Checklist Items -->
+        <main class="checklist-container">
+            <ul class="checklist" id="checklist-items">
+                <!-- Items populated by JS -->
+            </ul>
+        </main>
+
+        <!-- Navigation -->
+        <nav class="nav-controls">
+            <button class="nav-btn" id="btn-prev">
+                <span class="nav-arrow">&#9664;</span> PREV
+            </button>
+            <button class="nav-btn nav-btn-reset" id="btn-reset">
+                RESET
+            </button>
+            <button class="nav-btn" id="btn-next">
+                NEXT <span class="nav-arrow">&#9654;</span>
+            </button>
+        </nav>
+
+        <!-- Flight Data Footer -->
+        <footer class="flight-data">
+            <div class="flight-data-row">
+                <span class="data-item">
+                    <span class="data-label">ALT:</span>
+                    <span class="data-value" id="altitude">-- --</span>
+                </span>
+                <span class="data-item">
+                    <span class="data-label">GS:</span>
+                    <span class="data-value" id="ground-speed">-- --</span>
+                </span>
+            </div>
+            <div class="flight-data-row">
+                <span class="data-item">
+                    <span class="data-label">Phase:</span>
+                    <span class="data-value" id="phase-display">COCKPIT PREP</span>
+                    <span class="data-mode" id="phase-mode">(manual)</span>
+                </span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

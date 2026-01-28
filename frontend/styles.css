@@ -1,0 +1,703 @@
+/* Reset and base */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    /* Aviation-inspired dark theme */
+    --bg-primary: #0d0d1a;
+    --bg-secondary: #1a1a2e;
+    --bg-tertiary: #252540;
+    --bg-highlight: #2d2d4a;
+
+    --text-primary: #e8e8f0;
+    --text-secondary: #a0a0b8;
+    --text-muted: #6a6a80;
+
+    --accent-green: #00ff88;
+    --accent-green-dim: #00cc6a;
+    --accent-blue: #00b4ff;
+    --accent-blue-dim: #0090cc;
+    --accent-yellow: #ffcc00;
+    --accent-red: #ff4466;
+
+    --border-color: #3a3a5a;
+
+    /* Touch targets */
+    --touch-min: 44px;
+
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+}
+
+html {
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Header */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-center {
+    flex: 1;
+    text-align: center;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-icon {
+    font-size: 1.25rem;
+}
+
+.header-title {
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.status-indicator.connected .status-dot {
+    background-color: var(--accent-green);
+    box-shadow: 0 0 8px var(--accent-green);
+}
+
+.status-indicator.disconnected .status-dot {
+    background-color: var(--text-muted);
+    border: 1px solid var(--text-secondary);
+}
+
+.status-indicator.connected .status-text {
+    color: var(--accent-green);
+}
+
+.status-indicator.disconnected .status-text {
+    color: var(--text-secondary);
+}
+
+/* Settings link */
+.settings-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.settings-link:hover,
+.settings-link:active {
+    color: var(--accent-blue);
+}
+
+/* Back link */
+.back-link {
+    color: var(--accent-blue);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.back-link:hover,
+.back-link:active {
+    color: var(--accent-green);
+}
+
+/* Phase Header */
+.phase-header {
+    padding: var(--spacing-md);
+    background-color: var(--bg-highlight);
+    border-bottom: 2px solid var(--accent-blue);
+}
+
+.phase-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.phase-trigger {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Checklist */
+.checklist-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    background-color: var(--bg-primary);
+}
+
+.checklist {
+    list-style: none;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-xs);
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: var(--touch-min);
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.checklist-item:active {
+    transform: scale(0.98);
+    background-color: var(--bg-tertiary);
+}
+
+.checklist-item.checked {
+    border-color: var(--accent-green-dim);
+}
+
+.checklist-item.verified:not(.checked) {
+    border-color: var(--accent-blue-dim);
+}
+
+.checklist-item.checked.verified {
+    border-color: var(--accent-green-dim);
+}
+
+/* Checkbox indicator */
+.item-checkbox {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 6px;
+    border: 2px solid var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.15s ease;
+    position: relative;
+}
+
+.checklist-item.checked .item-checkbox {
+    background-color: var(--accent-green);
+    border-color: var(--accent-green);
+    color: var(--bg-primary);
+}
+
+.checklist-item.verified:not(.checked) .item-checkbox {
+    border-color: var(--accent-blue);
+}
+
+/* Verified ring indicator */
+.checklist-item.verified .item-checkbox::after {
+    content: '';
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 2px solid var(--accent-blue);
+    opacity: 0.8;
+}
+
+.checklist-item.checked.verified .item-checkbox::after {
+    border-color: var(--accent-blue);
+}
+
+/* Item content */
+.item-content {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.item-challenge {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.checklist-item.checked .item-challenge {
+    color: var(--accent-green);
+}
+
+.item-response {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-align: right;
+    font-weight: 500;
+}
+
+.checklist-item.checked .item-response {
+    color: var(--accent-green-dim);
+}
+
+/* MSFS actual values (from simulator) */
+.msfs-value {
+    color: var(--accent-blue);
+    text-decoration: underline;
+    text-decoration-style: solid;
+    text-underline-offset: 2px;
+}
+
+.checklist-item.checked .msfs-value {
+    color: var(--accent-green);
+}
+
+/* SimBrief expected values */
+.simbrief-value {
+    color: var(--accent-yellow);
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 2px;
+}
+
+.checklist-item.checked .simbrief-value {
+    color: var(--accent-green-dim);
+}
+
+/* Navigation Controls */
+.nav-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.nav-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md);
+    min-height: var(--touch-min);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.nav-btn:active {
+    transform: scale(0.96);
+    background-color: var(--bg-highlight);
+}
+
+.nav-btn-reset {
+    flex: 0.7;
+    color: var(--accent-yellow);
+    border-color: var(--accent-yellow);
+    opacity: 0.7;
+}
+
+.nav-btn-reset:active {
+    opacity: 1;
+}
+
+.nav-arrow {
+    font-size: 0.8rem;
+}
+
+/* Flight Data Footer */
+.flight-data {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border-top: 1px solid var(--border-color);
+    font-family: 'Courier New', monospace;
+}
+
+.flight-data-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xs) 0;
+}
+
+.data-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.data-label {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.data-value {
+    color: var(--accent-green);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.data-mode {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    margin-left: var(--spacing-xs);
+}
+
+.data-mode.auto {
+    color: var(--accent-blue);
+}
+
+/* Scrollbar styling */
+.checklist-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.checklist-container::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+.checklist-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+/* Empty state */
+.checklist-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* Animations */
+@keyframes pulse-green {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
+}
+
+@keyframes pulse-blue {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 180, 255, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(0, 180, 255, 0); }
+}
+
+.status-indicator.connected .status-dot {
+    animation: pulse-green 2s infinite;
+}
+
+/* Safe area support for notched phones */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .header {
+        padding-top: calc(var(--spacing-md) + env(safe-area-inset-top));
+    }
+
+    .flight-data {
+        padding-bottom: calc(var(--spacing-sm) + env(safe-area-inset-bottom));
+    }
+}
+
+/* Flight Plan Banner */
+.flightplan-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border-bottom: 1px solid var(--accent-blue-dim);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+.flightplan-banner.hidden {
+    display: none;
+}
+
+.banner-route {
+    color: var(--accent-green);
+    font-weight: 600;
+}
+
+.banner-fuel {
+    color: var(--accent-yellow);
+}
+
+/* Settings Page */
+.settings-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-md);
+}
+
+.settings-section {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    border: 1px solid var(--border-color);
+}
+
+.settings-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    margin-bottom: var(--spacing-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.settings-field {
+    margin-bottom: var(--spacing-lg);
+}
+
+.settings-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.settings-input {
+    width: 100%;
+    padding: var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.settings-input::placeholder {
+    color: var(--text-muted);
+}
+
+.settings-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: var(--spacing-sm);
+}
+
+.settings-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.settings-btn {
+    flex: 1;
+    padding: var(--spacing-md);
+    min-height: var(--touch-min);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+}
+
+.settings-btn:active {
+    transform: scale(0.98);
+}
+
+.settings-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.settings-btn-primary {
+    background-color: var(--accent-blue);
+    color: var(--bg-primary);
+}
+
+.settings-btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-blue-dim);
+}
+
+.settings-btn-secondary {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.settings-btn-secondary:hover:not(:disabled) {
+    background-color: var(--bg-highlight);
+}
+
+.settings-status {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.settings-status.success {
+    background-color: rgba(0, 255, 136, 0.1);
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green-dim);
+}
+
+.settings-status.error {
+    background-color: rgba(255, 68, 102, 0.1);
+    color: var(--accent-red);
+    border: 1px solid var(--accent-red);
+}
+
+.settings-status.hidden {
+    display: none;
+}
+
+/* Flight Plan Display */
+.flightplan-empty {
+    text-align: center;
+    padding: var(--spacing-lg);
+    color: var(--text-muted);
+}
+
+.flightplan-empty.hidden {
+    display: none;
+}
+
+.flightplan-info {
+    padding: var(--spacing-sm) 0;
+}
+
+.flightplan-info.hidden {
+    display: none;
+}
+
+.flightplan-route {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.fp-airport {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    font-family: 'Courier New', monospace;
+}
+
+.fp-arrow {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+}
+
+.flightplan-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-sm);
+}
+
+.fp-detail {
+    display: flex;
+    flex-direction: column;
+    padding: var(--spacing-sm);
+    background-color: var(--bg-tertiary);
+    border-radius: 6px;
+}
+
+.fp-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+}
+
+.fp-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+.fp-route-text {
+    font-size: 0.75rem;
+    word-break: break-all;
+    line-height: 1.3;
+}
+
+/* Hidden utility class */
+.hidden {
+    display: none !important;
+}
