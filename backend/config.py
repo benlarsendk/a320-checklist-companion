@@ -4,7 +4,7 @@ from pathlib import Path
 class Config:
     # Server settings
     HOST: str = "0.0.0.0"
-    PORT: int = 8080
+    PORT: int = 2549  # RFC 2549 - IP over Avian Carriers
 
     # SimConnect settings
     SIMCONNECT_ENABLED: bool = True

@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#fffef9">
     <title>Settings - A320 Checklist</title>
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
 </head>
 <body>
     <div id="app">
@@ -24,6 +25,17 @@
 
         <!-- Settings Content -->
         <main class="settings-container">
+            <!-- Mobile Access Section -->
+            <section class="settings-section">
+                <h2 class="settings-section-title">Mobile Access</h2>
+
+                <div class="qr-container">
+                    <div id="qr-code" class="qr-code"></div>
+                    <p class="qr-url" id="qr-url"></p>
+                    <p class="settings-hint">Scan with your phone to access the checklist on a mobile device.</p>
+                </div>
+            </section>
+
             <!-- Appearance Section -->
             <section class="settings-section">
                 <h2 class="settings-section-title">Appearance</h2>
@@ -167,9 +179,20 @@
             }
 
             async init() {
+                this.generateQRCode();
                 this.setupEventListeners();
                 await this.loadSettings();
                 await this.loadFlightPlan();
+            }
+
+            generateQRCode() {
+                const url = window.location.origin;
+                const qr = qrcode(0, 'M');
+                qr.addData(url);
+                qr.make();
+
+                document.getElementById('qr-code').innerHTML = qr.createSvgTag(4, 0);
+                document.getElementById('qr-url').textContent = url;
             }
 
             setupEventListeners() {

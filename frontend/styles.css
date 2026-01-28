@@ -707,6 +707,34 @@ body {
     display: none !important;
 }
 
+/* QR Code */
+.qr-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-md);
+}
+
+.qr-code {
+    background: white;
+    padding: var(--space-md);
+    border-radius: 8px;
+    border: 1px solid var(--paper-shadow);
+}
+
+.qr-code svg {
+    display: block;
+}
+
+.qr-url {
+    margin-top: var(--space-md);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    word-break: break-all;
+    text-align: center;
+}
+
 /* ================================
    Toggle Switch
    ================================ */
@@ -836,6 +864,10 @@ body.dark-mode .flightplan-route {
 
 body.dark-mode .fp-detail {
     background: var(--paper-aged);
+}
+
+body.dark-mode .qr-code {
+    border-color: var(--paper-shadow);
 }
 
 /* ================================
