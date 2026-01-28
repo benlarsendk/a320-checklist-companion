@@ -5,8 +5,8 @@ from pathlib import Path
 def get_base_dir() -> Path:
     """Get the base directory, handling both normal and frozen (PyInstaller) execution."""
     if getattr(sys, 'frozen', False):
-        # Running as compiled executable
-        return Path(sys.executable).parent
+        # Running as compiled executable - PyInstaller extracts to _MEIPASS temp folder
+        return Path(sys._MEIPASS)
     else:
         # Running as script
         return Path(__file__).parent.parent

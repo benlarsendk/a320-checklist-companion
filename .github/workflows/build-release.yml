@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
@@ -35,13 +35,13 @@ jobs:
 
       - name: Create ZIP archive
         run: |
-          Compress-Archive -Path "build/dist/A320 Checklist Companion/*" -DestinationPath "checklist_companion.zip"
+          Compress-Archive -Path "build/dist/A320 Checklist Companion.exe" -DestinationPath "A320_Checklist_Companion.zip"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: checklist_companion
-          path: checklist_companion.zip
+          name: A320_Checklist_Companion
+          path: A320_Checklist_Companion.zip
 
   release:
     needs: build-windows
@@ -53,7 +53,7 @@ jobs:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
-          name: checklist_companion
+          name: A320_Checklist_Companion
 
       - name: Get version
         id: version
@@ -72,9 +72,10 @@ jobs:
           body: |
             ## A320 Checklist Companion
 
-            Download `checklist_companion.zip`, extract, and run `A320 Checklist Companion.exe`.
+            Download `A320_Checklist_Companion.zip`, extract, and run `A320 Checklist Companion.exe`.
 
             ### Features
+            - Single portable executable - no installation required
             - Native Windows app with QR code for mobile access
             - SimConnect integration for automatic phase detection
             - SimBrief integration for flight plan data
@@ -84,6 +85,6 @@ jobs:
             ### Requirements
             - Windows 10 or later
             - Microsoft Flight Simulator (for SimConnect features)
-          files: checklist_companion.zip
+          files: A320_Checklist_Companion.zip
           draft: false
           prerelease: false

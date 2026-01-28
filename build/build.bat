@@ -11,24 +11,34 @@ REM Get the directory where this script is located
 set "BUILD_DIR=%~dp0"
 set "PROJECT_DIR=%BUILD_DIR%.."
 
-REM Check if Python is available
-python --version >nul 2>&1
+REM Check if Python 3.13 is available (required for pythonnet/pywebview compatibility)
+py -3.13 --version >nul 2>&1
 if errorlevel 1 (
-    echo  [ERROR] Python is not installed or not in PATH
-    echo  Please install Python from https://python.org
+    echo  [ERROR] Python 3.13 is not installed
+    echo  Please install Python 3.13 from https://python.org
+    echo  Note: Python 3.14+ is not supported due to pythonnet compatibility
     echo.
     pause
     exit /b 1
 )
 
 echo  [1/5] Checking Python version...
-python --version
+py -3.13 --version
 
-REM Create build virtual environment
+REM Create build virtual environment (delete old one if Python version changed)
+if exist "%BUILD_DIR%venv\pyvenv.cfg" (
+    findstr /C:"3.13" "%BUILD_DIR%venv\pyvenv.cfg" >nul 2>&1
+    if errorlevel 1 (
+        echo.
+        echo  [INFO] Removing old venv (wrong Python version)...
+        rmdir /s /q "%BUILD_DIR%venv"
+    )
+)
+
 if not exist "%BUILD_DIR%venv" (
     echo.
-    echo  [2/5] Creating build virtual environment...
-    python -m venv "%BUILD_DIR%venv"
+    echo  [2/5] Creating build virtual environment with Python 3.13...
+    py -3.13 -m venv "%BUILD_DIR%venv"
 ) else (
     echo.
     echo  [2/5] Using existing build virtual environment...

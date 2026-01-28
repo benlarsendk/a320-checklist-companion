@@ -14,6 +14,7 @@ import webview
 import uvicorn
 
 from backend.config import config
+from backend.main import app as fastapi_app
 
 
 def get_local_ip():
@@ -31,7 +32,7 @@ def get_local_ip():
 def run_server():
     """Run the FastAPI server in a background thread."""
     uvicorn.run(
-        "backend.main:app",
+        fastapi_app,
         host=config.HOST,
         port=config.PORT,
         log_level="warning",  # Quieter logging for desktop app

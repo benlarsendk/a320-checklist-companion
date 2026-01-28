@@ -7,12 +7,17 @@ Or run build/build.bat
 """
 
 import os
+import sys
 from pathlib import Path
 
 block_cipher = None
 
 # SPECPATH is the build folder, project root is one level up
 PROJECT_ROOT = Path(SPECPATH).parent
+VENV_PATH = PROJECT_ROOT / 'build' / 'venv'
+
+# Find SimConnect DLL in venv
+simconnect_dll = VENV_PATH / 'Lib' / 'site-packages' / 'SimConnect' / 'SimConnect.dll'
 
 a = Analysis(
     [str(PROJECT_ROOT / 'desktop_app.py')],
@@ -24,6 +29,8 @@ a = Analysis(
         # Include data files (checklists)
         (str(PROJECT_ROOT / 'data' / 'A320_Normal_Checklist_2026.json'), 'data'),
         (str(PROJECT_ROOT / 'data' / 'A320_Training_Checklist.json'), 'data'),
+        # Include SimConnect DLL
+        (str(simconnect_dll), 'SimConnect'),
     ],
     hiddenimports=[
         # Uvicorn
@@ -56,13 +63,16 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
     [],
-    exclude_binaries=True,
     name='A320 Checklist Companion',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
+    upx_exclude=[],
     console=False,  # No console window - pure GUI
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -70,15 +80,4 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=None,  # Add icon path here if you have one: 'assets/icon.ico'
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name='A320 Checklist Companion',
 )
