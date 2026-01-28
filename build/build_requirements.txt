@@ -1,0 +1,14 @@
+# Build environment requirements
+# This creates a clean environment for building the Windows executable
+
+# Runtime dependencies
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+websockets>=11.0
+SimConnect>=0.4.26
+pydantic>=2.0
+httpx>=0.25.0
+pywebview>=5.0
+
+# Build tools
+pyinstaller>=6.0

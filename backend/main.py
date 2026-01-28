@@ -455,10 +455,36 @@ async def websocket_endpoint(websocket: WebSocket):
 app.mount("/static", StaticFiles(directory=str(config.FRONTEND_DIR)), name="static")
 
 
+@app.get("/api/network-info")
+async def get_network_info():
+    """Get network information for QR code generation."""
+    import socket
+    try:
+        # Get local IP by connecting to an external address (doesn't actually connect)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except Exception:
+        local_ip = "localhost"
+
+    return {
+        "ip": local_ip,
+        "port": config.PORT,
+        "url": f"http://{local_ip}:{config.PORT}"
+    }
+
+
 @app.get("/")
 async def serve_frontend():
     """Serve the frontend."""
     return FileResponse(config.FRONTEND_DIR / "index.html")
+
+
+@app.get("/welcome")
+async def serve_welcome():
+    """Serve the welcome/startup page."""
+    return FileResponse(config.FRONTEND_DIR / "welcome.html")
 
 
 @app.get("/settings")

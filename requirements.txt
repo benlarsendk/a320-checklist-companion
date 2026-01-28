@@ -4,3 +4,6 @@ websockets>=11.0
 SimConnect>=0.4.26
 pydantic>=2.0
 httpx>=0.25.0
+
+# Optional: for desktop GUI app (run desktop_app.py)
+# pywebview>=5.0

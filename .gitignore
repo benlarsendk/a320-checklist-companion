@@ -22,3 +22,11 @@ Thumbs.db
 # Project specific
 data/settings.json
 *.log
+
+# Build artifacts
+build/venv/
+build/dist/
+build/work/
+build/installer_output/
+dist/
+*.spec.bak

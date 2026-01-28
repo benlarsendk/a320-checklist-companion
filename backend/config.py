@@ -1,4 +1,15 @@
+import sys
 from pathlib import Path
+
+
+def get_base_dir() -> Path:
+    """Get the base directory, handling both normal and frozen (PyInstaller) execution."""
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        return Path(sys.executable).parent
+    else:
+        # Running as script
+        return Path(__file__).parent.parent
 
 
 class Config:
@@ -15,8 +26,8 @@ class Config:
     AUTO_PHASE_TRANSITION: bool = True
     PHASE_TRANSITION_DELAY: float = 2.0  # Seconds before auto-transition
 
-    # Paths
-    BASE_DIR: Path = Path(__file__).parent.parent
+    # Paths - computed at import time
+    BASE_DIR: Path = get_base_dir()
     DATA_DIR: Path = BASE_DIR / "data"
     FRONTEND_DIR: Path = BASE_DIR / "frontend"
     CHECKLIST_FILE: Path = DATA_DIR / "A320_Normal_Checklist_2026.json"
