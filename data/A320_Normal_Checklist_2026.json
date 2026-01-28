@@ -62,6 +62,21 @@
         ]
       }
     ],
+    "cruise": [
+      {
+        "id": "cruise",
+        "title": "CRUISE",
+        "trigger": "Reaching cruise altitude",
+        "items": [
+          {"id": "ecam_memo", "challenge": "ECAM Memo", "response": "REVIEW", "verify": null},
+          {"id": "ecam_sys", "challenge": "ECAM SYS Pages", "response": "REVIEW", "verify": null},
+          {"id": "cabin_temp", "challenge": "Cabin Temp", "response": "MONITOR", "verify": null},
+          {"id": "fuel_quantity", "challenge": "Fuel Quantity", "response": "MONITOR", "verify": null},
+          {"id": "radar_tilt", "challenge": "Radar Tilt", "response": "ADJUST", "verify": null},
+          {"id": "tcas_traffic", "challenge": "TCAS Traffic Sel", "response": "ALL or BLW", "verify": null}
+        ]
+      }
+    ],
     "arrival": [
       {
         "id": "approach",
