@@ -830,3 +830,194 @@ body.dark-mode .flightplan-route {
 body.dark-mode .fp-detail {
     background: var(--paper-aged);
 }
+
+/* ================================
+   Responsive Design
+   ================================ */
+
+/* Tablet Portrait (768px+) */
+@media (min-width: 768px) {
+    #app {
+        max-width: 700px;
+    }
+
+    .phase-title {
+        font-size: 1.3rem;
+    }
+
+    .item-challenge,
+    .item-response {
+        font-size: 1rem;
+    }
+
+    .nav-btn {
+        padding: var(--space-md) var(--space-lg);
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet Landscape / Small Desktop (1024px+) */
+@media (min-width: 1024px) {
+    #app {
+        max-width: 800px;
+    }
+
+    .header {
+        padding: var(--space-lg) var(--space-xl);
+    }
+
+    .phase-header {
+        padding: var(--space-xl) var(--space-xl) var(--space-lg);
+    }
+
+    .phase-title {
+        font-size: 1.4rem;
+    }
+
+    .checklist-container {
+        padding: var(--space-lg) var(--space-xl);
+    }
+
+    .checklist-item {
+        padding: var(--space-md) 0;
+    }
+
+    .checklist-item:hover {
+        margin: 0 calc(-1 * var(--space-xl));
+        padding-left: var(--space-xl);
+        padding-right: var(--space-xl);
+    }
+
+    .checklist-item.verified:not(.checked) {
+        margin: 0 calc(-1 * var(--space-xl));
+        padding-left: var(--space-xl);
+        padding-right: var(--space-xl);
+    }
+
+    .item-challenge,
+    .item-response {
+        font-size: 1.05rem;
+    }
+
+    .nav-controls {
+        padding: var(--space-lg) var(--space-xl);
+    }
+
+    .flight-data {
+        padding: var(--space-md) var(--space-xl);
+    }
+}
+
+/* Landscape mode on phones/small tablets */
+@media (max-height: 500px) and (orientation: landscape) {
+    .header {
+        padding: var(--space-sm) var(--space-lg);
+    }
+
+    .header-title {
+        font-size: 0.8rem;
+    }
+
+    .phase-header {
+        padding: var(--space-sm) var(--space-lg);
+    }
+
+    .phase-title {
+        font-size: 1rem;
+        margin-bottom: 0;
+    }
+
+    .phase-trigger {
+        display: none;
+    }
+
+    .flightplan-banner {
+        padding: var(--space-xs) var(--space-lg);
+        font-size: 0.75rem;
+    }
+
+    .checklist-container {
+        padding: var(--space-sm) var(--space-lg);
+    }
+
+    .checklist-item {
+        padding: var(--space-xs) 0;
+        min-height: 36px;
+    }
+
+    .item-checkbox {
+        width: 20px;
+        min-width: 20px;
+        height: 20px;
+        font-size: 0.85rem;
+    }
+
+    .item-challenge,
+    .item-response {
+        font-size: 0.85rem;
+    }
+
+    .nav-controls {
+        padding: var(--space-sm) var(--space-lg);
+    }
+
+    .nav-btn {
+        padding: var(--space-sm) var(--space-md);
+        min-height: 36px;
+        font-size: 0.75rem;
+    }
+
+    .flight-data {
+        padding: var(--space-xs) var(--space-lg);
+        font-size: 0.7rem;
+    }
+
+    .flight-data-row {
+        padding: 1px 0;
+    }
+}
+
+/* Large landscape tablets */
+@media (min-width: 1024px) and (orientation: landscape) {
+    #app {
+        max-width: 900px;
+    }
+
+    .checklist-item {
+        padding: var(--space-md) 0;
+    }
+
+    .item-challenge,
+    .item-response {
+        font-size: 1.1rem;
+    }
+
+    .item-checkbox {
+        width: 28px;
+        min-width: 28px;
+        height: 28px;
+        font-size: 1.1rem;
+    }
+}
+
+/* Very small phones */
+@media (max-width: 360px) {
+    .header-title {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+    }
+
+    .phase-title {
+        font-size: 1rem;
+    }
+
+    .item-challenge,
+    .item-response {
+        font-size: 0.85rem;
+    }
+
+    .nav-btn {
+        padding: var(--space-sm);
+        font-size: 0.75rem;
+    }
+}
