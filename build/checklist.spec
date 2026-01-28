@@ -9,15 +9,16 @@ Or run build/build.bat
 import os
 import sys
 from pathlib import Path
+import importlib.util
 
 block_cipher = None
 
 # SPECPATH is the build folder, project root is one level up
 PROJECT_ROOT = Path(SPECPATH).parent
-VENV_PATH = PROJECT_ROOT / 'build' / 'venv'
 
-# Find SimConnect DLL in venv
-simconnect_dll = VENV_PATH / 'Lib' / 'site-packages' / 'SimConnect' / 'SimConnect.dll'
+# Find SimConnect DLL dynamically (works in venv or global install)
+simconnect_spec = importlib.util.find_spec('SimConnect')
+simconnect_dll = Path(simconnect_spec.origin).parent / 'SimConnect.dll'
 
 a = Analysis(
     [str(PROJECT_ROOT / 'desktop_app.py')],
