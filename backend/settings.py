@@ -17,6 +17,7 @@ class Settings(BaseModel):
     """Application settings model."""
 
     simbrief_username: str = ""
+    dark_mode: bool = False
 
 
 class SettingsManager:

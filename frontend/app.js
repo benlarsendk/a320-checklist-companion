@@ -37,9 +37,22 @@ class ChecklistApp {
     }
 
     init() {
+        this.loadSettings();
         this.connectWebSocket();
         this.setupEventListeners();
         this.requestWakeLock();
+    }
+
+    async loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const settings = await response.json();
+            if (settings.dark_mode) {
+                document.body.classList.add('dark-mode');
+            }
+        } catch (e) {
+            console.error('Failed to load settings:', e);
+        }
     }
 
     connectWebSocket() {

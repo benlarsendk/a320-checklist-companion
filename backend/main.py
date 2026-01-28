@@ -125,6 +125,7 @@ class SetPhaseRequest(BaseModel):
 
 class SettingsRequest(BaseModel):
     simbrief_username: str = ""
+    dark_mode: bool = False
 
 
 # REST API endpoints
@@ -287,7 +288,10 @@ async def get_settings():
 @app.post("/api/settings")
 async def save_settings(request: SettingsRequest):
     """Save settings."""
-    settings_manager.update(simbrief_username=request.simbrief_username)
+    settings_manager.update(
+        simbrief_username=request.simbrief_username,
+        dark_mode=request.dark_mode
+    )
     return {"success": True, "settings": settings_manager.settings.model_dump()}
 
 

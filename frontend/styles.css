@@ -703,3 +703,130 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* ================================
+   Toggle Switch
+   ================================ */
+
+.settings-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    cursor: pointer;
+    user-select: none;
+}
+
+.settings-toggle input {
+    display: none;
+}
+
+.toggle-slider {
+    width: 48px;
+    height: 26px;
+    background: var(--paper-shadow);
+    border-radius: 13px;
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.settings-toggle input:checked + .toggle-slider {
+    background: var(--ink);
+}
+
+.settings-toggle input:checked + .toggle-slider::after {
+    transform: translateX(22px);
+}
+
+.toggle-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--ink);
+}
+
+/* ================================
+   Dark Mode Theme
+   ================================ */
+
+body.dark-mode {
+    --paper: #1a1a1f;
+    --paper-aged: #222228;
+    --paper-shadow: #2a2a32;
+
+    --ink: #e8e8ec;
+    --ink-light: #a0a0a8;
+    --ink-faded: #6a6a72;
+
+    --checked: #4ade80;
+    --checked-bg: rgba(74, 222, 128, 0.1);
+    --verified: #60a5fa;
+    --verified-bg: rgba(96, 165, 250, 0.1);
+
+    --simbrief: #fbbf24;
+    --msfs: #60a5fa;
+}
+
+body.dark-mode {
+    background: #0f0f12;
+}
+
+body.dark-mode #app {
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+}
+
+body.dark-mode .settings-input {
+    background: var(--paper-aged);
+    border-color: var(--paper-shadow);
+}
+
+body.dark-mode .settings-btn-primary {
+    background: var(--ink-light);
+    color: var(--paper);
+}
+
+body.dark-mode .settings-btn-primary:hover:not(:disabled) {
+    background: var(--ink);
+}
+
+body.dark-mode .nav-btn {
+    border-color: var(--ink-faded);
+}
+
+body.dark-mode .nav-btn:hover {
+    background: var(--paper-aged);
+    border-color: var(--ink-light);
+}
+
+body.dark-mode .toggle-slider {
+    background: var(--paper-shadow);
+}
+
+body.dark-mode .toggle-slider::after {
+    background: var(--ink-light);
+}
+
+body.dark-mode .item-dots {
+    border-color: var(--ink-faded);
+}
+
+body.dark-mode .flightplan-route {
+    background: var(--paper-aged);
+    border-color: var(--paper-shadow);
+}
+
+body.dark-mode .fp-detail {
+    background: var(--paper-aged);
+}
