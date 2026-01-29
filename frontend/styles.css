@@ -26,6 +26,8 @@
     --checked-bg: #f0f7f2;
     --verified: #2563eb;
     --verified-bg: #f0f5ff;
+    --warning: #b45309;
+    --warning-bg: #fef3c7;
 
     /* Data colors */
     --simbrief: #996515;
@@ -266,6 +268,24 @@ body {
     color: var(--checked);
 }
 
+/* Warning state: checked but sim says it's not correct */
+.checklist-item.checked.unverified {
+    color: var(--warning);
+    background: var(--warning-bg);
+    margin: 0 calc(-1 * var(--space-lg));
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+}
+
+.checklist-item.checked.unverified .item-challenge,
+.checklist-item.checked.unverified .item-response {
+    color: var(--warning);
+}
+
+.checklist-item.checked.unverified .item-checkbox {
+    color: var(--warning);
+}
+
 .checklist-item.verified:not(.checked) {
     background: var(--verified-bg);
     margin: 0 calc(-1 * var(--space-lg));
@@ -447,10 +467,25 @@ body {
 .data-mode {
     color: var(--ink-faded);
     font-size: 0.7rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    padding: 2px 4px;
+    border-radius: 2px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.data-mode:hover {
+    background: var(--paper-shadow);
+    color: var(--ink-light);
 }
 
 .data-mode.auto {
     color: var(--verified);
+}
+
+.data-mode.auto:hover {
+    background: var(--verified-bg);
 }
 
 /* Scrollbar */
@@ -805,6 +840,8 @@ body.dark-mode {
     --checked-bg: rgba(74, 222, 128, 0.1);
     --verified: #60a5fa;
     --verified-bg: rgba(96, 165, 250, 0.1);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.15);
 
     --simbrief: #fbbf24;
     --msfs: #60a5fa;
@@ -927,7 +964,8 @@ body.dark-mode .qr-code {
         padding-right: var(--space-xl);
     }
 
-    .checklist-item.verified:not(.checked) {
+    .checklist-item.verified:not(.checked),
+    .checklist-item.checked.unverified {
         margin: 0 calc(-1 * var(--space-xl));
         padding-left: var(--space-xl);
         padding-right: var(--space-xl);

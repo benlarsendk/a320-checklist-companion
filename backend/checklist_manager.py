@@ -101,7 +101,12 @@ class ChecklistManager:
                 checklist = Checklist(checklist_data)
                 self.checklists[checklist.id] = checklist
 
-            # Load cruise checklists
+            # Load climb checklists (after takeoff, above 10k)
+            for checklist_data in data["phases"].get("climb", []):
+                checklist = Checklist(checklist_data)
+                self.checklists[checklist.id] = checklist
+
+            # Load cruise checklists (cruise, descent, below 10k)
             for checklist_data in data["phases"].get("cruise", []):
                 checklist = Checklist(checklist_data)
                 self.checklists[checklist.id] = checklist

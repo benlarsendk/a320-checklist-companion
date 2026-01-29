@@ -32,19 +32,31 @@ checklist_manager = ChecklistManager(training_mode=settings_manager.settings.tra
 websocket_manager = WebSocketManager()
 phase_detector = PhaseDetector()
 
+# Track last broadcast state to avoid spamming updates
+_last_broadcast_state: dict = {}
+
 # Verification variables to monitor
 VERIFY_VARS = [
     "BRAKE_PARKING_POSITION",
     "LIGHT_BEACON",
+    "LIGHT_LANDING",
+    "LIGHT_STROBE",
     "TRAILING_EDGE_FLAPS_LEFT_PERCENT",
     "SPOILERS_ARMED",
     "TRANSPONDER_STATE",
     "GEAR_HANDLE_POSITION",
+    "CABIN_SEATBELTS_ALERT_SWITCH",
+    "RUDDER_TRIM_PCT",
+    "ENG_COMBUSTION_1",
+    "ENG_COMBUSTION_2",
+    "AUTOPILOT_MASTER",
 ]
 
 
 async def on_state_update(state: FlightState):
     """Called when SimConnect state updates."""
+    global _last_broadcast_state
+
     # Update verification status for checklist items
     for var in VERIFY_VARS:
         value = simconnect.get_variable(var)
@@ -58,14 +70,23 @@ async def on_state_update(state: FlightState):
         if detected in CHECKLIST_PHASES:
             checklist_manager.set_phase(detected)
 
-    # Broadcast state to all WebSocket clients
-    await websocket_manager.send_state_update(
-        connected=simconnect.connected,
-        flight_state=state.model_dump() if simconnect.connected else None,
-        checklist_state=checklist_manager.get_state_dict(),
-        auto_transition=config.AUTO_PHASE_TRANSITION,
-        flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
-    )
+    # Build current state for comparison
+    current_state = {
+        "connected": simconnect.connected,
+        "flight_state": state.model_dump() if simconnect.connected else None,
+        "checklist_state": checklist_manager.get_state_dict(),
+    }
+
+    # Only broadcast if something changed
+    if current_state != _last_broadcast_state:
+        _last_broadcast_state = current_state.copy()
+        await websocket_manager.send_state_update(
+            connected=simconnect.connected,
+            flight_state=state.model_dump() if simconnect.connected else None,
+            checklist_state=checklist_manager.get_state_dict(),
+            auto_transition=config.AUTO_PHASE_TRANSITION,
+            flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
+        )
 
 
 async def periodic_broadcast():
@@ -267,6 +288,13 @@ async def set_auto_mode():
     return {"success": True, "mode": "auto"}
 
 
+@app.post("/api/set-airborne")
+async def set_airborne():
+    """Mark that we've been airborne (for simulator testing)."""
+    phase_detector._was_airborne = True
+    return {"success": True, "was_airborne": True}
+
+
 @app.post("/api/mode/manual")
 async def set_manual_mode():
     """Set phase detection to manual mode."""
@@ -443,6 +471,16 @@ async def websocket_endpoint(websocket: WebSocket):
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                     checklist_state=checklist_manager.get_state_dict(),
                 )
+
+            elif msg_type == "set_mode":
+                mode = msg_data.get("mode")
+                if mode in ("auto", "manual"):
+                    checklist_manager.phase_mode = mode
+                    await websocket_manager.send_state_update(
+                        connected=simconnect.connected,
+                        flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+                        checklist_state=checklist_manager.get_state_dict(),
+                    )
 
     except WebSocketDisconnect:
         await websocket_manager.disconnect(websocket)

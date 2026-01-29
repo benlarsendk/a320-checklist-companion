@@ -31,6 +31,8 @@ SIMCONNECT_VARS = {
     "LIGHT_STROBE": "light_strobe",
     "TRANSPONDER_STATE:1": "transponder_state",
     "AUTOPILOT_MASTER": "autopilot_master",
+    "CABIN SEATBELTS ALERT SWITCH": "seatbelt_sign",
+    "RUDDER_TRIM_PCT": "rudder_trim_pct",
     # Fuel & Instruments for checklist integration
     "FUEL_TOTAL_QUANTITY_WEIGHT": "fuel_total_lbs",  # Fuel in pounds (converted to kg)
     "KOHLSMAN_SETTING_MB": "altimeter_hpa",  # Altimeter in millibars/hPa
@@ -114,7 +116,8 @@ class SimConnectClient:
                                         "spoilers_armed", "parking_brake",
                                         "eng1_running", "eng2_running",
                                         "light_beacon", "light_nav", "light_landing",
-                                        "light_taxi", "light_strobe", "autopilot_master"):
+                                        "light_taxi", "light_strobe", "autopilot_master",
+                                        "seatbelt_sign"):
                             value = bool(value)
                         # Convert fuel from lbs to kg
                         elif attr_name == "fuel_total_lbs":
@@ -185,5 +188,10 @@ class SimConnectClient:
             "LIGHT_LANDING": self._state.light_landing,
             "LIGHT_TAXI": self._state.light_taxi,
             "LIGHT_STROBE": self._state.light_strobe,
+            "CABIN_SEATBELTS_ALERT_SWITCH": self._state.seatbelt_sign,
+            "RUDDER_TRIM_PCT": self._state.rudder_trim_pct,
+            "ENG_COMBUSTION_1": self._state.eng1_running,
+            "ENG_COMBUSTION_2": self._state.eng2_running,
+            "AUTOPILOT_MASTER": self._state.autopilot_master,
         }
         return var_map.get(var_name)

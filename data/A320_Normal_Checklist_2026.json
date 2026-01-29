@@ -10,7 +10,7 @@
         "items": [
           {"id": "gear_pins", "challenge": "Gear Pins & Covers", "response": "REMOVED", "verify": null},
           {"id": "fuel", "challenge": "Fuel Quantity", "response": "___KG CHECKED", "verify": null},
-          {"id": "seat_belts", "challenge": "Seat Belts", "response": "ON", "verify": null},
+          {"id": "seat_belts", "challenge": "Seat Belts", "response": "ON", "verify": {"var": "CABIN_SEATBELTS_ALERT_SWITCH", "condition": "eq", "value": true}},
           {"id": "adirs", "challenge": "ADIRS", "response": "NAV", "verify": null},
           {"id": "baro_ref", "challenge": "Baro Reference", "response": "___SET (BOTH)", "verify": null}
         ]
@@ -34,7 +34,7 @@
           {"id": "anti_ice", "challenge": "Anti Ice", "response": "AS RQRD", "verify": null},
           {"id": "ecam_status", "challenge": "ECAM Status", "response": "CHECKED", "verify": null},
           {"id": "pitch_trim", "challenge": "Pitch Trim", "response": "___% SET", "verify": null},
-          {"id": "rudder_trim", "challenge": "Rudder Trim", "response": "ZERO", "verify": null}
+          {"id": "rudder_trim", "challenge": "Rudder Trim", "response": "ZERO", "verify": {"var": "RUDDER_TRIM_PCT", "condition": "eq", "value": 0}}
         ]
       },
       {
@@ -57,8 +57,24 @@
         "trigger": "Line-up clearance received",
         "items": [
           {"id": "t_o_rwy", "challenge": "T.O. RWY", "response": "CONFIRMED", "verify": null},
+          {"id": "strobe_on", "challenge": "Strobe Lights", "response": "ON", "verify": {"var": "LIGHT_STROBE", "condition": "eq", "value": true}},
+          {"id": "ldg_lt_lineup", "challenge": "Landing Lights", "response": "ON", "verify": {"var": "LIGHT_LANDING", "condition": "eq", "value": true}},
           {"id": "tcas", "challenge": "TCAS", "response": "TA/RA", "verify": {"var": "TRANSPONDER_STATE", "condition": "gte", "value": 3}},
           {"id": "packs", "challenge": "Packs 1 & 2", "response": "AS RQRD", "verify": null}
+        ]
+      }
+    ],
+    "climb": [
+      {
+        "id": "climb",
+        "title": "AFTER TAKEOFF / CLIMB",
+        "trigger": "Gear up, positive climb",
+        "items": [
+          {"id": "landing_gear_up", "challenge": "LDG Gear", "response": "UP", "verify": {"var": "GEAR_HANDLE_POSITION", "condition": "eq", "value": false}},
+          {"id": "flaps_up", "challenge": "Flaps", "response": "RETRACTED", "verify": {"var": "TRAILING_EDGE_FLAPS_LEFT_PERCENT", "condition": "eq", "value": 0}},
+          {"id": "packs", "challenge": "Packs", "response": "ON", "verify": null},
+          {"id": "speed_brake", "challenge": "Speed Brake", "response": "DISARMED", "verify": {"var": "SPOILERS_ARMED", "condition": "eq", "value": false}},
+          {"id": "ext_lights_climb", "challenge": "Exterior Lights", "response": "AS RQRD", "verify": null}
         ]
       }
     ],
@@ -75,6 +91,21 @@
           {"id": "radar_tilt", "challenge": "Radar Tilt", "response": "ADJUST", "verify": null},
           {"id": "tcas_traffic", "challenge": "TCAS Traffic Sel", "response": "ALL or BLW", "verify": null}
         ]
+      },
+      {
+        "id": "descent",
+        "title": "DESCENT",
+        "trigger": "TOD / Descent clearance received",
+        "items": [
+          {"id": "atis_descent", "challenge": "ATIS / Airport Info", "response": "CHECKED", "verify": null},
+          {"id": "fmgc_descent", "challenge": "FMGC", "response": "DESCENT PERF SET", "verify": null},
+          {"id": "ecam_memo_descent", "challenge": "ECAM Memo", "response": "REVIEW", "verify": null},
+          {"id": "fuel_pred", "challenge": "Fuel Prediction", "response": "CHECKED", "verify": null},
+          {"id": "tcas_descent", "challenge": "TCAS", "response": "BLW or ALL", "verify": null},
+          {"id": "ldg_lt_on", "challenge": "Landing Lights (below FL100)", "response": "ON", "verify": {"var": "LIGHT_LANDING", "condition": "eq", "value": true}},
+          {"id": "seat_belts_descent", "challenge": "Seat Belts (below FL100)", "response": "ON", "verify": {"var": "CABIN_SEATBELTS_ALERT_SWITCH", "condition": "eq", "value": true}},
+          {"id": "efis_cstr", "challenge": "EFIS (below FL100)", "response": "CSTR (BOTH)", "verify": null}
+        ]
       }
     ],
     "arrival": [
@@ -84,7 +115,7 @@
         "trigger": "Below 10,000 ft AAL + BARO REF set",
         "items": [
           {"id": "baro_ref_ldg", "challenge": "Baro Reference", "response": "___SET (BOTH)", "verify": null},
-          {"id": "seat_belts_appr", "challenge": "Seat Belts", "response": "ON", "verify": null},
+          {"id": "seat_belts_appr", "challenge": "Seat Belts", "response": "ON", "verify": {"var": "CABIN_SEATBELTS_ALERT_SWITCH", "condition": "eq", "value": true}},
           {"id": "min", "challenge": "Minimum", "response": "___SET", "verify": null},
           {"id": "auto_brake", "challenge": "Auto Brake", "response": "AS RQRD", "verify": null},
           {"id": "eng_mode_appr", "challenge": "ENG MODE Selector", "response": "AS RQRD", "verify": null}
@@ -109,7 +140,7 @@
           {"id": "spoilers_disarm", "challenge": "Spoilers", "response": "DISARMED", "verify": {"var": "SPOILERS_ARMED", "condition": "eq", "value": false}},
           {"id": "apu", "challenge": "APU", "response": "AS RQRD", "verify": null},
           {"id": "radar_off", "challenge": "Radar & Predictive W/S", "response": "OFF", "verify": null},
-          {"id": "rudder_trim_ldg", "challenge": "Rudder Trim", "response": "ZERO", "verify": null}
+          {"id": "rudder_trim_ldg", "challenge": "Rudder Trim", "response": "ZERO", "verify": {"var": "RUDDER_TRIM_PCT", "condition": "eq", "value": 0}}
         ]
       },
       {
@@ -118,8 +149,8 @@
         "trigger": "Seat Belts sign switched OFF",
         "items": [
           {"id": "parking_brake_park", "challenge": "Parking Brake", "response": "SET", "verify": {"var": "BRAKE_PARKING_POSITION", "condition": "eq", "value": true}},
-          {"id": "engines_park", "challenge": "Engines", "response": "OFF", "verify": null},
-          {"id": "seat_belts_off", "challenge": "Seat Belts", "response": "OFF", "verify": null},
+          {"id": "engines_park", "challenge": "Engines", "response": "OFF", "verify": {"var": "ENG_COMBUSTION_1", "condition": "eq", "value": false}},
+          {"id": "seat_belts_off", "challenge": "Seat Belts", "response": "OFF", "verify": {"var": "CABIN_SEATBELTS_ALERT_SWITCH", "condition": "eq", "value": false}},
           {"id": "ext_lt_park", "challenge": "Exterior Lights", "response": "AS RQRD", "verify": null},
           {"id": "fuel_pumps", "challenge": "Fuel Pumps", "response": "OFF", "verify": null},
           {"id": "beacon_off", "challenge": "Beacon", "response": "OFF", "verify": {"var": "LIGHT_BEACON", "condition": "eq", "value": false}}

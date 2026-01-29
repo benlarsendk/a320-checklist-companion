@@ -32,7 +32,9 @@ CHECKLIST_PHASES = [
     Phase.AFTER_START,
     Phase.TAXI,
     Phase.LINE_UP,
-    Phase.CRUISE,  # Training checklist includes cruise
+    Phase.CLIMB,  # After takeoff + climb checklists
+    Phase.CRUISE,
+    Phase.DESCENT,  # Descent + below 10k checklists
     Phase.APPROACH,
     Phase.LANDING,
     Phase.AFTER_LANDING,
@@ -48,7 +50,7 @@ PHASE_DISPLAY = {
     Phase.TAXI: "TAXI",
     Phase.LINE_UP: "LINE-UP",
     Phase.TAKEOFF_ROLL: "TAKEOFF",
-    Phase.CLIMB: "CLIMB",
+    Phase.CLIMB: "AFTER T/O",
     Phase.CRUISE: "CRUISE",
     Phase.DESCENT: "DESCENT",
     Phase.APPROACH: "APPROACH",
@@ -92,6 +94,8 @@ class FlightState(BaseModel):
     # Systems
     transponder_state: int = 0  # 0=off, 1=standby, 2=test, 3=on, 4=alt
     autopilot_master: bool = False
+    seatbelt_sign: bool = False
+    rudder_trim_pct: float = 0.0  # -100 to 100, 0 = neutral
 
     # Fuel & Instruments (for checklist integration)
     fuel_total_kg: float = 0.0  # Total fuel in kg
@@ -117,29 +121,27 @@ class PhaseDetector:
 
         if on_ground:
             if self._was_airborne:
-                # We just landed
+                # We've flown - this is post-flight
                 if ground_speed < 5:
                     if not engines_running:
-                        self._was_airborne = False
                         if parking_brake:
                             return Phase.PARKING
                         return Phase.SECURING
                     return Phase.AFTER_LANDING
                 return Phase.AFTER_LANDING
 
-            # On ground, haven't been airborne yet (or reset)
+            # Haven't been airborne yet (fresh start or after reset)
             if not engines_running:
-                if parking_brake:
-                    return Phase.COCKPIT_PREPARATION
-                return Phase.PARKING
+                # Pre-flight: cold and dark
+                return Phase.COCKPIT_PREPARATION
 
             if engines_running and parking_brake:
                 return Phase.AFTER_START
 
             if engines_running and not parking_brake:
-                if ground_speed < 5:
-                    return Phase.BEFORE_START
                 if ground_speed < 30:
+                    # Stopped or slow taxi - stay on TAXI checklist
+                    # (LINE_UP must be manually selected since we can't detect runway position)
                     return Phase.TAXI
                 # High ground speed = takeoff roll
                 self._was_airborne = True
@@ -155,6 +157,9 @@ class PhaseDetector:
                 return Phase.CLIMB
 
             if vertical_speed < -500:
+                # Landing: low altitude with gear down
+                if altitude_agl < 1000 and gear_down:
+                    return Phase.LANDING
                 if altitude_agl < 3000 or gear_down:
                     return Phase.APPROACH
                 return Phase.DESCENT

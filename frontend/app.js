@@ -169,6 +169,8 @@ class ChecklistApp {
         const classes = ['checklist-item'];
         if (item.checked) classes.push('checked');
         if (item.verified === true) classes.push('verified');
+        // Warning: checked but sim says it's wrong
+        if (item.checked && item.verified === false) classes.push('unverified');
 
         const checkmark = item.checked ? '&#10003;' : '';
 
@@ -290,6 +292,17 @@ class ChecklistApp {
         this.elements.btnPrev.addEventListener('click', () => this.prevPhase());
         this.elements.btnNext.addEventListener('click', () => this.nextPhase());
         this.elements.btnReset.addEventListener('click', () => this.resetChecklists());
+        this.elements.phaseMode.addEventListener('click', () => this.toggleMode());
+    }
+
+    toggleMode() {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        const newMode = this.state.phase_mode === 'auto' ? 'manual' : 'auto';
+        this.ws.send(JSON.stringify({
+            type: 'set_mode',
+            data: { mode: newMode }
+        }));
     }
 
     async requestWakeLock() {
