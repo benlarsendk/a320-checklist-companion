@@ -19,6 +19,7 @@ from .simbrief_client import (
     SimBriefUserNotFound,
     SimBriefNetworkError,
 )
+from .voice import VoiceManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,6 +32,10 @@ simconnect = SimConnectClient()
 checklist_manager = ChecklistManager(training_mode=settings_manager.settings.training_mode)
 websocket_manager = WebSocketManager()
 phase_detector = PhaseDetector()
+voice_manager = VoiceManager(
+    audio_dir=config.BASE_DIR / "audio",
+    models_dir=config.BASE_DIR / "models",
+)
 
 # Verification variables to monitor
 VERIFY_VARS = [
@@ -488,11 +493,214 @@ async def websocket_endpoint(websocket: WebSocket):
                         flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                     )
 
+            # Voice commands
+            elif msg_type == "voice_start_listening":
+                result = await voice_manager.start_listening()
+                await websocket.send_json({"type": "voice_listening", "data": result})
+
+            elif msg_type == "voice_stop_listening":
+                # Audio data comes as base64-encoded in msg_data
+                import base64
+                audio_b64 = msg_data.get("audio_data")
+                audio_data = base64.b64decode(audio_b64) if audio_b64 else None
+                result = await voice_manager.stop_listening(audio_data)
+
+                # If response accepted and auto-advance enabled, check the item
+                if result.get("action") == "response_accepted" and result.get("auto_advance"):
+                    item_id = result.get("item_id")
+                    if item_id:
+                        phase = checklist_manager.current_phase.value
+                        checklist_manager.toggle_item(phase, item_id)
+                        await websocket_manager.send_state_update(
+                            connected=simconnect.connected,
+                            flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+                            checklist_state=checklist_manager.get_state_dict(),
+                            flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
+                        )
+
+                await websocket.send_json({"type": "voice_result", "data": result})
+
+            elif msg_type == "voice_web_speech_result":
+                # Process result from Web Speech API (fallback)
+                spoken_text = msg_data.get("text", "")
+                result = await voice_manager.process_response(spoken_text)
+
+                # If response accepted and auto-advance enabled, check the item
+                if result.get("action") == "response_accepted" and result.get("auto_advance"):
+                    item_id = result.get("item_id")
+                    if item_id:
+                        phase = checklist_manager.current_phase.value
+                        checklist_manager.toggle_item(phase, item_id)
+                        await websocket_manager.send_state_update(
+                            connected=simconnect.connected,
+                            flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+                            checklist_state=checklist_manager.get_state_dict(),
+                            flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
+                        )
+
+                await websocket.send_json({"type": "voice_result", "data": result})
+
+            elif msg_type == "voice_announce_checklist":
+                checklist = checklist_manager.get_current_checklist()
+                if checklist:
+                    result = await voice_manager.announce_checklist_available(
+                        checklist.id,
+                        checklist.title
+                    )
+                    await websocket.send_json({"type": "voice_speak", "data": result})
+
+            elif msg_type == "voice_read_item":
+                item_id = msg_data.get("item_id")
+                checklist = checklist_manager.get_current_checklist()
+                if checklist:
+                    item = next((i for i in checklist.items if i["id"] == item_id), None)
+                    if item:
+                        result = await voice_manager.read_item_challenge(
+                            item_id,
+                            item["challenge"],
+                            item["response"]
+                        )
+                        await websocket.send_json({"type": "voice_speak", "data": result})
+
     except WebSocketDisconnect:
         await websocket_manager.disconnect(websocket)
     except Exception as e:
         logger.error(f"WebSocket error: {e}")
         await websocket_manager.disconnect(websocket)
+
+
+# =============================================================================
+# Voice API Endpoints
+# =============================================================================
+
+class VoiceSettingsRequest(BaseModel):
+    enabled: bool = True
+    auto_read_challenges: bool = True
+    auto_advance_on_response: bool = True
+    volume: float = 1.0
+    speech_rate: float = 1.0
+    ptt_keyboard_key: str = "Space"
+    ptt_gamepad_button: int | None = None
+    use_whisper: bool = True
+
+
+class VoiceResponseRequest(BaseModel):
+    spoken_text: str
+
+
+class WhisperDownloadRequest(BaseModel):
+    model_name: str = "base"
+
+
+@app.get("/api/voice/status")
+async def get_voice_status():
+    """Get voice system status."""
+    return voice_manager.get_status()
+
+
+@app.post("/api/voice/settings")
+async def update_voice_settings(request: VoiceSettingsRequest):
+    """Update voice settings."""
+    voice_manager.update_settings(**request.model_dump())
+    return {"success": True, "settings": voice_manager.get_status()["settings"]}
+
+
+@app.post("/api/voice/download-whisper")
+async def download_whisper_model(request: WhisperDownloadRequest):
+    """Download Whisper model for local STT."""
+    try:
+        success = await voice_manager.download_whisper_model(request.model_name)
+        if success:
+            return {"success": True, "status": voice_manager.stt.get_status()}
+        else:
+            return {"success": False, "error": "Failed to load model. Make sure openai-whisper is installed."}
+    except Exception as e:
+        logger.error(f"Whisper download error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/voice/announce-checklist")
+async def announce_checklist():
+    """Announce current checklist is available."""
+    checklist = checklist_manager.get_current_checklist()
+    if not checklist:
+        raise HTTPException(status_code=400, detail="No current checklist")
+
+    result = await voice_manager.announce_checklist_available(
+        checklist.id,
+        checklist.title
+    )
+    return result
+
+
+@app.post("/api/voice/read-item/{item_id}")
+async def read_checklist_item(item_id: str):
+    """Read a specific checklist item challenge."""
+    checklist = checklist_manager.get_current_checklist()
+    if not checklist:
+        raise HTTPException(status_code=400, detail="No current checklist")
+
+    item = next((i for i in checklist.items if i["id"] == item_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    result = await voice_manager.read_item_challenge(
+        item_id,
+        item["challenge"],
+        item["response"]
+    )
+    return result
+
+
+@app.post("/api/voice/process-response")
+async def process_voice_response(request: VoiceResponseRequest):
+    """Process a spoken response (from Web Speech API)."""
+    result = await voice_manager.process_response(request.spoken_text)
+
+    # If response accepted and auto-advance enabled, check the item
+    if result.get("action") == "response_accepted" and result.get("auto_advance"):
+        item_id = result.get("item_id")
+        if item_id:
+            phase = checklist_manager.current_phase.value
+            checklist_manager.toggle_item(phase, item_id)
+            await websocket_manager.send_state_update(
+                connected=simconnect.connected,
+                flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+                checklist_state=checklist_manager.get_state_dict(),
+            )
+
+    return result
+
+
+class TranscribeRequest(BaseModel):
+    audio_data: str  # base64 encoded
+
+
+@app.post("/api/voice/test-transcribe")
+async def test_transcribe(request: TranscribeRequest):
+    """Test transcription with audio data."""
+    import base64
+
+    if not voice_manager.stt.is_available:
+        return {"text": None, "error": "Whisper not loaded. Download the model first."}
+
+    try:
+        audio_bytes = base64.b64decode(request.audio_data)
+        text = await voice_manager.stt.transcribe_webm(audio_bytes)
+
+        if text:
+            return {"text": text, "error": None}
+        else:
+            return {"text": None, "error": "Could not transcribe audio"}
+    except Exception as e:
+        logger.error(f"Transcription error: {e}")
+        return {"text": None, "error": str(e)}
+
+
+# Serve audio files
+audio_dir = config.BASE_DIR / "audio"
+if audio_dir.exists():
+    app.mount("/audio", StaticFiles(directory=str(audio_dir)), name="audio")
 
 
 # Serve frontend static files

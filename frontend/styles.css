@@ -1073,3 +1073,289 @@ body.dark-mode .qr-code {
         font-size: 0.75rem;
     }
 }
+
+/* ================================
+   Voice System
+   ================================ */
+
+/* PTT Indicator Overlay */
+.voice-ptt-indicator {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 16px;
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.15s;
+}
+
+.voice-ptt-indicator.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ptt-mic-icon {
+    font-size: 3rem;
+    margin-bottom: var(--space-md);
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+.ptt-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #4ade80;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.ptt-hint {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: var(--space-sm);
+}
+
+/* Transcription Result */
+.voice-transcription {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    z-index: 999;
+    opacity: 1;
+    transition: opacity 0.3s;
+    max-width: 80%;
+    text-align: center;
+}
+
+.voice-transcription.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.voice-transcription.accepted {
+    background: var(--checked-bg);
+    color: var(--checked);
+    border: 1px solid var(--checked);
+}
+
+.voice-transcription.rejected {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #b91c1c;
+}
+
+/* Voice Settings Section */
+.voice-model-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--paper-aged);
+    border-radius: 4px;
+    margin-bottom: var(--space-md);
+}
+
+.voice-model-status .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.voice-model-status .status-dot.available {
+    background: var(--checked);
+}
+
+.voice-model-status .status-dot.unavailable {
+    background: var(--ink-faded);
+}
+
+.voice-model-status .status-text {
+    font-size: 0.8rem;
+    color: var(--ink-light);
+}
+
+.voice-key-capture {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.voice-key-display {
+    flex: 1;
+    padding: var(--space-md);
+    background: var(--paper-aged);
+    border: 1px solid var(--paper-shadow);
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.voice-key-display.capturing {
+    border-color: var(--verified);
+    background: var(--verified-bg);
+}
+
+.btn-capture-key {
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: 1px solid var(--ink-light);
+    border-radius: 4px;
+    color: var(--ink);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.btn-capture-key:hover {
+    background: var(--paper-aged);
+}
+
+/* Gamepad select */
+.voice-gamepad-select {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.gamepad-button-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-xs);
+}
+
+.gamepad-btn {
+    padding: var(--space-sm);
+    background: var(--paper-aged);
+    border: 1px solid var(--paper-shadow);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-align: center;
+}
+
+.gamepad-btn:hover {
+    background: var(--paper-shadow);
+}
+
+.gamepad-btn.selected {
+    background: var(--verified-bg);
+    border-color: var(--verified);
+    color: var(--verified);
+}
+
+.gamepad-status {
+    font-size: 0.75rem;
+    color: var(--ink-faded);
+    font-style: italic;
+}
+
+/* Download progress */
+.download-progress {
+    margin-top: var(--space-md);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--paper-shadow);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--verified);
+    transition: width 0.3s;
+}
+
+.progress-text {
+    font-size: 0.75rem;
+    color: var(--ink-faded);
+    margin-top: var(--space-xs);
+    text-align: center;
+}
+
+/* Microphone Permission Prompt */
+.mic-permission-prompt {
+    padding: var(--space-md);
+    background: var(--paper-aged);
+    border: 1px solid var(--paper-shadow);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.mic-permission-prompt p {
+    margin-bottom: var(--space-md);
+    color: var(--ink-light);
+    font-size: 0.85rem;
+}
+
+.mic-permission-prompt small {
+    color: var(--ink-faded);
+}
+
+.mic-permission-prompt.hidden {
+    display: none;
+}
+
+/* Voice Test Area */
+.voice-test-area {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.voice-test-area .settings-btn.recording {
+    background: #ef4444;
+    color: white;
+    border-color: #ef4444;
+}
+
+.voice-test-result {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.9rem;
+    min-height: 2em;
+}
+
+.voice-test-result.success {
+    background: var(--checked-bg);
+    color: var(--checked);
+}
+
+.voice-test-result.error {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+/* Dark mode voice styles */
+body.dark-mode .voice-ptt-indicator {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+body.dark-mode .voice-transcription.accepted {
+    background: var(--checked-bg);
+    border-color: var(--checked);
+}
+
+body.dark-mode .voice-transcription.rejected {
+    background: rgba(185, 28, 28, 0.2);
+    border-color: #ef4444;
+    color: #ef4444;
+}

@@ -12,17 +12,17 @@ from backend.config import config
 
 def main():
     print("""
-    ╔═══════════════════════════════════════════════════════════╗
-    ║         MSFS A320 CHECKLIST COMPANION                     ║
-    ╠═══════════════════════════════════════════════════════════╣
-    ║  Server starting...                                       ║
-    ║                                                           ║
-    ║  Access the checklist UI at:                              ║
-    ║    • http://localhost:{port:<5}                             ║
-    ║    • http://<your-pc-ip>:{port:<5} (from other devices)     ║
-    ║                                                           ║
-    ║  Press Ctrl+C to stop the server                          ║
-    ╚═══════════════════════════════════════════════════════════╝
+    +-----------------------------------------------------------+
+    |         MSFS A320 CHECKLIST COMPANION                     |
+    +-----------------------------------------------------------+
+    |  Server starting...                                       |
+    |                                                           |
+    |  Access the checklist UI at:                              |
+    |    * http://localhost:{port:<5}                             |
+    |    * http://<your-pc-ip>:{port:<5} (from other devices)     |
+    |                                                           |
+    |  Press Ctrl+C to stop the server                          |
+    +-----------------------------------------------------------+
     """.format(port=config.PORT))
 
     uvicorn.run(

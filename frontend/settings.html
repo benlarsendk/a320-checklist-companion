@@ -64,6 +64,85 @@
                 </div>
             </section>
 
+            <!-- Voice Section -->
+            <section class="settings-section">
+                <h2 class="settings-section-title">Voice Checklist</h2>
+
+                <div class="settings-field">
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="voice-enabled-toggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-label">Enable Voice</span>
+                    </label>
+                    <p class="settings-hint">Use voice to read checklists and accept responses via PTT.</p>
+                </div>
+
+                <div class="settings-field">
+                    <label class="settings-label">Speech Recognition</label>
+                    <div class="voice-model-status" id="whisper-status">
+                        <span class="status-dot unavailable"></span>
+                        <span class="status-text">Whisper not loaded</span>
+                    </div>
+                    <div class="settings-actions">
+                        <button id="btn-download-whisper" class="settings-btn settings-btn-secondary">
+                            Download Whisper Model
+                        </button>
+                    </div>
+                    <div id="whisper-progress" class="download-progress hidden">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 0%"></div>
+                        </div>
+                        <div class="progress-text">Downloading...</div>
+                    </div>
+                    <p class="settings-hint">Whisper provides better recognition. Falls back to browser speech if unavailable.</p>
+                </div>
+
+                <div class="settings-field">
+                    <label class="settings-label">Microphone</label>
+                    <div id="mic-permission-prompt" class="mic-permission-prompt">
+                        <p>Microphone access required for voice input.</p>
+                        <button id="btn-request-mic" class="settings-btn settings-btn-primary">
+                            Grant Microphone Access
+                        </button>
+                    </div>
+                    <select id="mic-select" class="settings-input hidden">
+                        <option value="">Default</option>
+                    </select>
+                    <p class="settings-hint">Select which microphone to use for voice input.</p>
+                </div>
+
+                <div class="settings-field">
+                    <label class="settings-label">Push-to-Talk Key</label>
+                    <div class="voice-key-capture">
+                        <div class="voice-key-display" id="ptt-key-display">Space</div>
+                        <button id="btn-capture-ptt" class="btn-capture-key">Change</button>
+                    </div>
+                    <p class="settings-hint">Press and hold to speak your response.</p>
+                </div>
+
+                <div class="settings-field">
+                    <label class="settings-label">Test Voice Input</label>
+                    <div class="voice-test-area">
+                        <button id="btn-test-voice" class="settings-btn settings-btn-secondary">
+                            Hold to Test
+                        </button>
+                        <div id="voice-test-result" class="voice-test-result"></div>
+                    </div>
+                    <p class="settings-hint">Hold button and speak to test transcription.</p>
+                </div>
+
+                <div class="settings-field">
+                    <label class="settings-label">Gamepad PTT Button</label>
+                    <div class="voice-gamepad-select">
+                        <div class="gamepad-status" id="gamepad-status">No gamepad detected</div>
+                        <div class="gamepad-button-grid" id="gamepad-buttons">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                    <p class="settings-hint">Optional: use a joystick/controller button for PTT.</p>
+                </div>
+            </section>
+
             <!-- SimBrief Section -->
             <section class="settings-section">
                 <h2 class="settings-section-title">SimBrief Integration</h2>
@@ -173,7 +252,30 @@
                     fpTow: document.getElementById('fp-tow'),
                     fpAltitude: document.getElementById('fp-altitude'),
                     fpCi: document.getElementById('fp-ci'),
+                    // Voice elements
+                    voiceEnabledToggle: document.getElementById('voice-enabled-toggle'),
+                    whisperStatus: document.getElementById('whisper-status'),
+                    btnDownloadWhisper: document.getElementById('btn-download-whisper'),
+                    whisperProgress: document.getElementById('whisper-progress'),
+                    micSelect: document.getElementById('mic-select'),
+                    micPermissionPrompt: document.getElementById('mic-permission-prompt'),
+                    btnRequestMic: document.getElementById('btn-request-mic'),
+                    pttKeyDisplay: document.getElementById('ptt-key-display'),
+                    btnCapturePtt: document.getElementById('btn-capture-ptt'),
+                    gamepadStatus: document.getElementById('gamepad-status'),
+                    gamepadButtons: document.getElementById('gamepad-buttons'),
+                    btnTestVoice: document.getElementById('btn-test-voice'),
+                    voiceTestResult: document.getElementById('voice-test-result'),
                 };
+
+                // Voice settings state
+                this.voiceSettings = {
+                    enabled: false,
+                    pttKey: 'Space',
+                    pttGamepadButton: null,
+                };
+                this.capturingKey = false;
+                this.selectedGamepadButton = null;
 
                 this.init();
             }
@@ -183,6 +285,10 @@
                 this.setupEventListeners();
                 await this.loadSettings();
                 await this.loadFlightPlan();
+                await this.loadVoiceStatus();
+                this.setupGamepadDetection();
+                await this.loadMicrophones();
+                this.setupVoiceTest();
             }
 
             async generateQRCode() {
@@ -209,6 +315,19 @@
                 this.elements.btnTest.addEventListener('click', () => this.testConnection());
                 this.elements.btnFetch.addEventListener('click', () => this.fetchFlightPlan());
                 this.elements.btnClear.addEventListener('click', () => this.clearFlightPlan());
+
+                // Voice event listeners
+                this.elements.voiceEnabledToggle.addEventListener('change', () => this.toggleVoice());
+                this.elements.btnDownloadWhisper.addEventListener('click', () => this.downloadWhisper());
+                this.elements.btnCapturePtt.addEventListener('click', () => this.startKeyCapture());
+
+                // Key capture
+                document.addEventListener('keydown', (e) => {
+                    if (this.capturingKey) {
+                        e.preventDefault();
+                        this.captureKey(e.code);
+                    }
+                });
             }
 
             async loadSettings() {
@@ -357,6 +476,419 @@
                 } else {
                     document.body.classList.remove('dark-mode');
                 }
+            }
+
+            // ================================
+            // Voice Settings
+            // ================================
+
+            async loadVoiceStatus() {
+                try {
+                    const response = await fetch('/api/voice/status');
+                    const status = await response.json();
+
+                    // Update toggle
+                    this.voiceSettings.enabled = status.enabled || false;
+                    this.elements.voiceEnabledToggle.checked = this.voiceSettings.enabled;
+
+                    // Update Whisper status
+                    const whisperAvailable = status.stt?.whisper_available || false;
+                    const modelName = status.stt?.model_name || 'none';
+                    this.updateWhisperStatus(whisperAvailable, modelName);
+
+                    // Update PTT key
+                    if (status.settings?.ptt_keyboard_key) {
+                        this.voiceSettings.pttKey = status.settings.ptt_keyboard_key;
+                        this.elements.pttKeyDisplay.textContent = this.formatKeyName(this.voiceSettings.pttKey);
+                    }
+
+                    // Update gamepad button
+                    if (status.settings?.ptt_gamepad_button !== undefined) {
+                        this.voiceSettings.pttGamepadButton = status.settings.ptt_gamepad_button;
+                        this.selectedGamepadButton = status.settings.ptt_gamepad_button;
+                    }
+                } catch (e) {
+                    console.error('Failed to load voice status:', e);
+                }
+            }
+
+            updateWhisperStatus(available, modelName) {
+                const statusEl = this.elements.whisperStatus;
+                const dot = statusEl.querySelector('.status-dot');
+                const text = statusEl.querySelector('.status-text');
+
+                if (available) {
+                    dot.className = 'status-dot available';
+                    text.textContent = `Whisper loaded (${modelName})`;
+                    this.elements.btnDownloadWhisper.textContent = 'Reload Model';
+                } else {
+                    dot.className = 'status-dot unavailable';
+                    text.textContent = 'Whisper not loaded';
+                    this.elements.btnDownloadWhisper.textContent = 'Download Whisper Model';
+                }
+            }
+
+            async toggleVoice() {
+                const enabled = this.elements.voiceEnabledToggle.checked;
+                this.voiceSettings.enabled = enabled;
+                await this.saveVoiceSettings();
+            }
+
+            async downloadWhisper() {
+                const btn = this.elements.btnDownloadWhisper;
+                const progress = this.elements.whisperProgress;
+
+                btn.disabled = true;
+                btn.textContent = 'Downloading...';
+                progress.classList.remove('hidden');
+
+                try {
+                    const response = await fetch('/api/voice/download-whisper', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ model_name: 'base' }),
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        this.updateWhisperStatus(true, 'base');
+                        progress.querySelector('.progress-fill').style.width = '100%';
+                        progress.querySelector('.progress-text').textContent = 'Download complete!';
+                    } else {
+                        progress.querySelector('.progress-text').textContent = 'Download failed: ' + (result.error || 'Unknown error');
+                    }
+                } catch (e) {
+                    progress.querySelector('.progress-text').textContent = 'Download failed: Network error';
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Download Whisper Model';
+                    setTimeout(() => progress.classList.add('hidden'), 3000);
+                }
+            }
+
+            startKeyCapture() {
+                this.capturingKey = true;
+                this.elements.pttKeyDisplay.textContent = 'Press a key...';
+                this.elements.pttKeyDisplay.classList.add('capturing');
+                this.elements.btnCapturePtt.textContent = 'Cancel';
+            }
+
+            async captureKey(keyCode) {
+                this.capturingKey = false;
+                this.voiceSettings.pttKey = keyCode;
+                this.elements.pttKeyDisplay.textContent = this.formatKeyName(keyCode);
+                this.elements.pttKeyDisplay.classList.remove('capturing');
+                this.elements.btnCapturePtt.textContent = 'Change';
+                await this.saveVoiceSettings();
+            }
+
+            formatKeyName(code) {
+                // Make key codes more readable
+                return code
+                    .replace('Key', '')
+                    .replace('Digit', '')
+                    .replace('Arrow', '')
+                    .replace('Numpad', 'Num ');
+            }
+
+            setupGamepadDetection() {
+                window.addEventListener('gamepadconnected', (e) => this.onGamepadConnected(e.gamepad));
+                window.addEventListener('gamepaddisconnected', () => this.onGamepadDisconnected());
+
+                // Check for already connected
+                const gamepads = navigator.getGamepads();
+                for (const gp of gamepads) {
+                    if (gp) {
+                        this.onGamepadConnected(gp);
+                        break;
+                    }
+                }
+            }
+
+            onGamepadConnected(gamepad) {
+                this.elements.gamepadStatus.textContent = `Connected: ${gamepad.id.substring(0, 30)}...`;
+                this.renderGamepadButtons(gamepad.buttons.length);
+            }
+
+            onGamepadDisconnected() {
+                this.elements.gamepadStatus.textContent = 'No gamepad detected';
+                this.elements.gamepadButtons.innerHTML = '';
+            }
+
+            renderGamepadButtons(count) {
+                const container = this.elements.gamepadButtons;
+                container.innerHTML = '';
+
+                for (let i = 0; i < Math.min(count, 16); i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'gamepad-btn' + (this.selectedGamepadButton === i ? ' selected' : '');
+                    btn.textContent = `${i}`;
+                    btn.addEventListener('click', () => this.selectGamepadButton(i));
+                    container.appendChild(btn);
+                }
+
+                // Add "None" option
+                const noneBtn = document.createElement('button');
+                noneBtn.className = 'gamepad-btn' + (this.selectedGamepadButton === null ? ' selected' : '');
+                noneBtn.textContent = 'None';
+                noneBtn.addEventListener('click', () => this.selectGamepadButton(null));
+                container.appendChild(noneBtn);
+            }
+
+            async selectGamepadButton(buttonIndex) {
+                this.selectedGamepadButton = buttonIndex;
+                this.voiceSettings.pttGamepadButton = buttonIndex;
+
+                // Update UI
+                const buttons = this.elements.gamepadButtons.querySelectorAll('.gamepad-btn');
+                buttons.forEach((btn, i) => {
+                    if (i < buttons.length - 1) {
+                        btn.classList.toggle('selected', i === buttonIndex);
+                    } else {
+                        btn.classList.toggle('selected', buttonIndex === null);
+                    }
+                });
+
+                await this.saveVoiceSettings();
+            }
+
+            async saveVoiceSettings() {
+                try {
+                    await fetch('/api/voice/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            enabled: this.voiceSettings.enabled,
+                            ptt_keyboard_key: this.voiceSettings.pttKey,
+                            ptt_gamepad_button: this.voiceSettings.pttGamepadButton,
+                        }),
+                    });
+                } catch (e) {
+                    console.error('Failed to save voice settings:', e);
+                }
+            }
+
+            // ================================
+            // Microphone Selection
+            // ================================
+
+            async loadMicrophones() {
+                // Check current permission state
+                let permState = 'prompt'; // default: will show popup
+                try {
+                    const status = await navigator.permissions.query({ name: 'microphone' });
+                    permState = status.state;
+
+                    // Listen for permission changes
+                    status.onchange = () => {
+                        if (status.state === 'granted') {
+                            this.populateMicrophoneList();
+                        }
+                    };
+                } catch (e) {
+                    // Permissions API not supported
+                }
+
+                if (permState === 'granted') {
+                    await this.populateMicrophoneList();
+                    return;
+                }
+
+                if (permState === 'denied') {
+                    // Previously denied - need manual reset
+                    this.showMicPermissionDenied();
+                    return;
+                }
+
+                // Permission is 'prompt' - show button that will trigger browser popup
+                this.elements.micPermissionPrompt.classList.remove('hidden');
+                this.elements.micSelect.classList.add('hidden');
+
+                this.elements.btnRequestMic.addEventListener('click', async () => {
+                    await this.requestMicrophoneAccess();
+                });
+            }
+
+            showMicPermissionDenied() {
+                this.elements.micPermissionPrompt.classList.remove('hidden');
+                this.elements.micSelect.classList.add('hidden');
+
+                const prompt = this.elements.micPermissionPrompt;
+                prompt.innerHTML = `
+                    <p>Microphone access was previously blocked.</p>
+                    <p style="margin-bottom: 12px;"><strong>To fix:</strong> Click the icon in the address bar (left of URL) and set Microphone to "Allow", then refresh.</p>
+                    <button onclick="location.reload()" class="settings-btn settings-btn-secondary">Refresh Page</button>
+                `;
+            }
+
+            async requestMicrophoneAccess() {
+                try {
+                    this.elements.btnRequestMic.textContent = 'Requesting...';
+                    this.elements.btnRequestMic.disabled = true;
+
+                    // This should trigger browser permission popup
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+
+                    await this.populateMicrophoneList();
+
+                    this.elements.micPermissionPrompt.classList.add('hidden');
+                    this.elements.micSelect.classList.remove('hidden');
+                } catch (e) {
+                    console.error('Microphone access error:', e);
+
+                    if (e.name === 'NotAllowedError') {
+                        this.showMicPermissionDenied();
+                    } else {
+                        // Other error (no mic, etc)
+                        const prompt = this.elements.micPermissionPrompt;
+                        prompt.innerHTML = `
+                            <p>Could not access microphone: ${e.message}</p>
+                            <button onclick="location.reload()" class="settings-btn settings-btn-secondary">Try Again</button>
+                        `;
+                    }
+                }
+            }
+
+            async populateMicrophoneList() {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const mics = devices.filter(d => d.kind === 'audioinput');
+
+                const select = this.elements.micSelect;
+                select.innerHTML = '<option value="">Default</option>';
+
+                mics.forEach(mic => {
+                    const option = document.createElement('option');
+                    option.value = mic.deviceId;
+                    option.textContent = mic.label || `Microphone ${select.options.length}`;
+                    select.appendChild(option);
+                });
+
+                // Load saved selection
+                const saved = localStorage.getItem('selectedMicId');
+                if (saved) {
+                    select.value = saved;
+                }
+
+                select.addEventListener('change', () => {
+                    localStorage.setItem('selectedMicId', select.value);
+                });
+
+                // Show the select
+                this.elements.micPermissionPrompt.classList.add('hidden');
+                this.elements.micSelect.classList.remove('hidden');
+            }
+
+            // ================================
+            // Voice Test
+            // ================================
+
+            setupVoiceTest() {
+                const btn = this.elements.btnTestVoice;
+                let mediaRecorder = null;
+                let audioChunks = [];
+                let stream = null;
+
+                btn.addEventListener('mousedown', async () => {
+                    try {
+                        const micId = this.elements.micSelect.value;
+                        const constraints = micId
+                            ? { audio: { deviceId: { exact: micId } } }
+                            : { audio: true };
+
+                        stream = await navigator.mediaDevices.getUserMedia(constraints);
+                        audioChunks = [];
+
+                        // Try different mimeTypes for compatibility
+                        let mimeType = 'audio/webm;codecs=opus';
+                        if (!MediaRecorder.isTypeSupported(mimeType)) {
+                            mimeType = 'audio/webm';
+                        }
+                        if (!MediaRecorder.isTypeSupported(mimeType)) {
+                            mimeType = 'audio/ogg;codecs=opus';
+                        }
+
+                        mediaRecorder = new MediaRecorder(stream, { mimeType });
+                        console.log('Recording with mimeType:', mimeType);
+
+                        mediaRecorder.ondataavailable = (e) => {
+                            console.log('Audio chunk received, size:', e.data.size);
+                            if (e.data.size > 0) audioChunks.push(e.data);
+                        };
+
+                        // Request data every 100ms to ensure we get chunks
+                        mediaRecorder.start(100);
+                        btn.textContent = 'Listening...';
+                        btn.classList.add('recording');
+                        this.elements.voiceTestResult.textContent = '';
+                    } catch (e) {
+                        console.error('Recording error:', e);
+                        this.elements.voiceTestResult.textContent = 'Error: ' + e.message;
+                        this.elements.voiceTestResult.className = 'voice-test-result error';
+                    }
+                });
+
+                const stopRecording = async () => {
+                    if (!mediaRecorder || mediaRecorder.state === 'inactive') return;
+
+                    btn.textContent = 'Processing...';
+                    btn.classList.remove('recording');
+
+                    mediaRecorder.onstop = async () => {
+                        console.log('Recording stopped, chunks:', audioChunks.length);
+
+                        if (audioChunks.length === 0) {
+                            this.elements.voiceTestResult.textContent = 'No audio recorded';
+                            this.elements.voiceTestResult.className = 'voice-test-result error';
+                            btn.textContent = 'Hold to Test';
+                            return;
+                        }
+
+                        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+                        console.log('Audio blob size:', blob.size, 'type:', blob.type);
+
+                        // Convert to base64 and send to backend
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            const base64 = reader.result.split(',')[1];
+                            console.log('Base64 length:', base64.length);
+
+                            try {
+                                const response = await fetch('/api/voice/test-transcribe', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ audio_data: base64 }),
+                                });
+                                const result = await response.json();
+
+                                if (result.text) {
+                                    this.elements.voiceTestResult.textContent = `"${result.text}"`;
+                                    this.elements.voiceTestResult.className = 'voice-test-result success';
+                                } else {
+                                    this.elements.voiceTestResult.textContent = result.error || 'No speech detected';
+                                    this.elements.voiceTestResult.className = 'voice-test-result error';
+                                }
+                            } catch (e) {
+                                this.elements.voiceTestResult.textContent = 'Error: ' + e.message;
+                                this.elements.voiceTestResult.className = 'voice-test-result error';
+                            }
+
+                            btn.textContent = 'Hold to Test';
+                        };
+                        reader.readAsDataURL(blob);
+
+                        // Stop all tracks
+                        if (stream) {
+                            stream.getTracks().forEach(t => t.stop());
+                        }
+                    };
+
+                    mediaRecorder.stop();
+                };
+
+                btn.addEventListener('mouseup', stopRecording);
+                btn.addEventListener('mouseleave', stopRecording);
             }
         }
 

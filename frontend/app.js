@@ -5,6 +5,7 @@
 class ChecklistApp {
     constructor() {
         this.ws = null;
+        this.voice = null;
         this.state = {
             connected: false,
             phase: 'cockpit_preparation',
@@ -41,7 +42,15 @@ class ChecklistApp {
         this.connectWebSocket();
         this.setupEventListeners();
         this.setupChecklistClickHandler();
+        this.setupVoiceSystem();
         this.requestWakeLock();
+    }
+
+    setupVoiceSystem() {
+        if (typeof VoiceSystem !== 'undefined') {
+            this.voice = new VoiceSystem(this);
+            this.voice.fetchStatus();
+        }
     }
 
     async loadSettings() {
@@ -66,6 +75,9 @@ class ChecklistApp {
 
         this.ws.onopen = () => {
             console.log('WebSocket connected');
+            if (this.voice) {
+                this.voice.setWebSocket(this.ws);
+            }
         };
 
         this.ws.onmessage = (event) => {
@@ -90,6 +102,11 @@ class ChecklistApp {
     handleMessage(message) {
         if (message.type === 'state_update') {
             this.updateState(message.data);
+        } else if (message.type && message.type.startsWith('voice_')) {
+            // Forward voice messages to voice system
+            if (this.voice) {
+                this.voice.handleVoiceMessage(message);
+            }
         }
     }
 
