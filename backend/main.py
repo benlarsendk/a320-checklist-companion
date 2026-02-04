@@ -40,6 +40,15 @@ VERIFY_VARS = [
     "SPOILERS_ARMED",
     "TRANSPONDER_STATE",
     "GEAR_HANDLE_POSITION",
+    "CABIN_SEATBELTS_ALERT_SWITCH",
+    "CABIN_NO_SMOKING_ALERT_SWITCH",
+    "APU_SWITCH",
+    "APU_GENERATOR_SWITCH",
+    "RUDDER_TRIM_PCT",
+    "ENG_COMBUSTION",
+    "LIGHT_NAV",
+    "LIGHT_STROBE",
+    "ELECTRICAL_MASTER_BATTERY",
 ]
 
 
@@ -404,35 +413,58 @@ async def websocket_endpoint(websocket: WebSocket):
                     connected=simconnect.connected,
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                     checklist_state=checklist_manager.get_state_dict(),
+                    flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                 )
 
             elif msg_type == "set_phase":
                 try:
                     phase = Phase(msg_data.get("phase"))
                     checklist_manager.set_phase(phase)
-                    checklist_manager.phase_mode = "manual"
+                    # Sync the phase detector to this phase
+                    phase_detector.sync_to_phase(phase)
+                    # Check if this matches what detector would now detect
+                    detected = phase_detector.detect(simconnect.state)
+                    if phase == detected:
+                        checklist_manager.phase_mode = "auto"
+                    else:
+                        checklist_manager.phase_mode = "manual"
                     await websocket_manager.send_state_update(
                         connected=simconnect.connected,
                         flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                         checklist_state=checklist_manager.get_state_dict(),
+                        flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                     )
                 except ValueError:
                     pass
 
             elif msg_type == "next_phase":
                 checklist_manager.next_phase()
+                # Sync detector to new phase
+                phase_detector.sync_to_phase(checklist_manager.current_phase)
+                # Check if we landed on the auto-detected phase
+                detected = phase_detector.detect(simconnect.state)
+                if checklist_manager.current_phase == detected:
+                    checklist_manager.phase_mode = "auto"
                 await websocket_manager.send_state_update(
                     connected=simconnect.connected,
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                     checklist_state=checklist_manager.get_state_dict(),
+                    flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                 )
 
             elif msg_type == "prev_phase":
                 checklist_manager.prev_phase()
+                # Sync detector to new phase
+                phase_detector.sync_to_phase(checklist_manager.current_phase)
+                # Check if we landed on the auto-detected phase
+                detected = phase_detector.detect(simconnect.state)
+                if checklist_manager.current_phase == detected:
+                    checklist_manager.phase_mode = "auto"
                 await websocket_manager.send_state_update(
                     connected=simconnect.connected,
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                     checklist_state=checklist_manager.get_state_dict(),
+                    flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                 )
 
             elif msg_type == "reset":
@@ -442,7 +474,19 @@ async def websocket_endpoint(websocket: WebSocket):
                     connected=simconnect.connected,
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
                     checklist_state=checklist_manager.get_state_dict(),
+                    flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
                 )
+
+            elif msg_type == "set_mode":
+                mode = msg_data.get("mode")
+                if mode in ("auto", "manual"):
+                    checklist_manager.phase_mode = mode
+                    await websocket_manager.send_state_update(
+                        connected=simconnect.connected,
+                        flight_state=simconnect.state.model_dump() if simconnect.connected else None,
+                        checklist_state=checklist_manager.get_state_dict(),
+                        flight_plan=simbrief_client.flight_plan.model_dump() if simbrief_client.flight_plan else None,
+                    )
 
     except WebSocketDisconnect:
         await websocket_manager.disconnect(websocket)

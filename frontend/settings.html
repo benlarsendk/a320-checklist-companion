@@ -179,14 +179,21 @@
             }
 
             async init() {
-                this.generateQRCode();
+                await this.generateQRCode();
                 this.setupEventListeners();
                 await this.loadSettings();
                 await this.loadFlightPlan();
             }
 
-            generateQRCode() {
-                const url = window.location.origin;
+            async generateQRCode() {
+                let url = window.location.origin;
+                try {
+                    const response = await fetch('/api/network-info');
+                    const data = await response.json();
+                    url = data.url;
+                } catch (e) {
+                    console.error('Failed to get network info:', e);
+                }
                 const qr = qrcode(0, 'M');
                 qr.addData(url);
                 qr.make();

@@ -26,6 +26,8 @@
     --checked-bg: #f0f7f2;
     --verified: #2563eb;
     --verified-bg: #f0f5ff;
+    --not-verified: #d97706;
+    --not-verified-bg: #fffbeb;
 
     /* Data colors */
     --simbrief: #996515;
@@ -266,8 +268,10 @@ body {
     color: var(--checked);
 }
 
-.checklist-item.verified:not(.checked) {
-    background: var(--verified-bg);
+/* Verified but not checked - no special styling, just show the circle indicator */
+
+.checklist-item.not-verified.checked {
+    background: var(--not-verified-bg);
     margin: 0 calc(-1 * var(--space-lg));
     padding-left: var(--space-lg);
     padding-right: var(--space-lg);
@@ -290,9 +294,14 @@ body {
     color: var(--checked);
 }
 
-.checklist-item.verified:not(.checked) .item-checkbox::before {
-    content: '○';
-    color: var(--verified);
+/* No indicator for verified but unchecked items */
+
+.checklist-item.not-verified.checked .item-checkbox {
+    color: var(--not-verified);
+}
+
+.checklist-item.not-verified.checked {
+    --checked: var(--not-verified);
 }
 
 /* Challenge and response with dotted leader */
@@ -447,6 +456,8 @@ body {
 .data-mode {
     color: var(--ink-faded);
     font-size: 0.7rem;
+    cursor: pointer;
+    user-select: none;
 }
 
 .data-mode.auto {
@@ -805,6 +816,8 @@ body.dark-mode {
     --checked-bg: rgba(74, 222, 128, 0.1);
     --verified: #60a5fa;
     --verified-bg: rgba(96, 165, 250, 0.1);
+    --not-verified: #fbbf24;
+    --not-verified-bg: rgba(251, 191, 36, 0.1);
 
     --simbrief: #fbbf24;
     --msfs: #60a5fa;

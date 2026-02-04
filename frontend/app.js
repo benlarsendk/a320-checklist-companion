@@ -40,6 +40,7 @@ class ChecklistApp {
         this.loadSettings();
         this.connectWebSocket();
         this.setupEventListeners();
+        this.setupChecklistClickHandler();
         this.requestWakeLock();
     }
 
@@ -93,8 +94,22 @@ class ChecklistApp {
     }
 
     updateState(data) {
+        const prevChecklist = JSON.stringify(this.state.checklist);
+        const prevPhase = this.state.phase;
+
         this.state = { ...this.state, ...data };
-        this.render();
+
+        // Only re-render checklist if it actually changed
+        const newChecklist = JSON.stringify(this.state.checklist);
+        const checklistChanged = prevChecklist !== newChecklist || prevPhase !== this.state.phase;
+
+        this.renderConnectionStatus();
+        this.renderPhaseHeader();
+        this.renderFlightPlanBanner();
+        if (checklistChanged) {
+            this.renderChecklist();
+        }
+        this.renderFlightData();
     }
 
     render() {
@@ -104,6 +119,9 @@ class ChecklistApp {
         this.renderChecklist();
         this.renderFlightData();
     }
+
+    // Debounce helper to prevent rapid re-renders
+    _lastClickTime = 0;
 
     renderConnectionStatus() {
         const { connected } = this.state;
@@ -155,13 +173,26 @@ class ChecklistApp {
         }
 
         container.innerHTML = checklist.items.map(item => this.renderChecklistItem(item, phase)).join('');
+    }
 
-        // Add click handlers
-        container.querySelectorAll('.checklist-item').forEach(el => {
-            el.addEventListener('click', () => {
-                const itemId = el.dataset.itemId;
+    setupChecklistClickHandler() {
+        // Use event delegation - attach once to container, not to each item
+        const container = this.elements.checklistItems;
+        container.addEventListener('click', (e) => {
+            const item = e.target.closest('.checklist-item');
+            if (item) {
+                const itemId = item.dataset.itemId;
+                const phase = this.state.phase;
+
+                // Optimistic UI update - toggle immediately without waiting for server
+                item.classList.toggle('checked');
+                const checkbox = item.querySelector('.item-checkbox');
+                if (checkbox) {
+                    checkbox.innerHTML = item.classList.contains('checked') ? '&#10003;' : '';
+                }
+
                 this.toggleItem(phase, itemId);
-            });
+            }
         });
     }
 
@@ -169,6 +200,7 @@ class ChecklistApp {
         const classes = ['checklist-item'];
         if (item.checked) classes.push('checked');
         if (item.verified === true) classes.push('verified');
+        if (item.verified === false) classes.push('not-verified');
 
         const checkmark = item.checked ? '&#10003;' : '';
 
@@ -290,6 +322,14 @@ class ChecklistApp {
         this.elements.btnPrev.addEventListener('click', () => this.prevPhase());
         this.elements.btnNext.addEventListener('click', () => this.nextPhase());
         this.elements.btnReset.addEventListener('click', () => this.resetChecklists());
+        this.elements.phaseMode.addEventListener('click', () => this.toggleMode());
+    }
+
+    toggleMode() {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        const newMode = this.state.phase_mode === 'auto' ? 'manual' : 'auto';
+        this.ws.send(JSON.stringify({ type: 'set_mode', data: { mode: newMode } }));
     }
 
     async requestWakeLock() {

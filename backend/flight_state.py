@@ -10,10 +10,9 @@ class Phase(str, Enum):
     AFTER_START = "after_start"
     TAXI = "taxi"
     LINE_UP = "line_up"
+    AFTER_TAKEOFF = "after_takeoff"
 
-    # Flight phases (not checklist phases, but useful for detection)
-    TAKEOFF_ROLL = "takeoff_roll"
-    CLIMB = "climb"
+    # Flight phases
     CRUISE = "cruise"
     DESCENT = "descent"
 
@@ -32,7 +31,8 @@ CHECKLIST_PHASES = [
     Phase.AFTER_START,
     Phase.TAXI,
     Phase.LINE_UP,
-    Phase.CRUISE,  # Training checklist includes cruise
+    Phase.AFTER_TAKEOFF,
+    Phase.CRUISE,
     Phase.APPROACH,
     Phase.LANDING,
     Phase.AFTER_LANDING,
@@ -47,8 +47,7 @@ PHASE_DISPLAY = {
     Phase.AFTER_START: "AFTER START",
     Phase.TAXI: "TAXI",
     Phase.LINE_UP: "LINE-UP",
-    Phase.TAKEOFF_ROLL: "TAKEOFF",
-    Phase.CLIMB: "CLIMB",
+    Phase.AFTER_TAKEOFF: "AFTER TAKEOFF",
     Phase.CRUISE: "CRUISE",
     Phase.DESCENT: "DESCENT",
     Phase.APPROACH: "APPROACH",
@@ -77,10 +76,12 @@ class FlightState(BaseModel):
     parking_brake: bool = True
 
     # Engines
-    eng1_running: bool = False
-    eng2_running: bool = False
+    eng1_combustion: bool = False
+    eng2_combustion: bool = False
     eng1_n1: float = 0.0
     eng2_n1: float = 0.0
+    eng1_n1_rpm: float = 0.0  # 0-16384 scale
+    eng2_n1_rpm: float = 0.0  # 0-16384 scale
 
     # Lights
     light_beacon: bool = False
@@ -97,78 +98,117 @@ class FlightState(BaseModel):
     fuel_total_kg: float = 0.0  # Total fuel in kg
     altimeter_hpa: int = 1013  # Altimeter setting in hPa
 
+    # Cabin signs
+    seatbelt_sign: bool = False  # Seat belt sign on/off
+    no_smoking_sign: bool = False  # No smoking sign on/off
+
+    # APU
+    apu_pct_rpm: float = 0.0  # APU RPM percentage (>0 = running)
+    apu_gen_switch: bool = False  # APU generator switch
+
+    # Trim
+    rudder_trim_pct: float = 0.0  # Rudder trim percentage
+    elevator_trim: float = 0.0  # Elevator trim position
+
+    # Electrical
+    master_battery: bool = False  # Master battery switch
+
 
 class PhaseDetector:
-    """Detects the current flight phase based on aircraft state."""
+    """State machine for flight phase detection. Only progresses forward automatically."""
 
     def __init__(self):
-        self._was_airborne = False
-        self._last_phase = Phase.COCKPIT_PREPARATION
+        self._current_phase = Phase.COCKPIT_PREPARATION
+
+    @property
+    def current_phase(self) -> Phase:
+        return self._current_phase
+
+    def _engines_running(self, state: FlightState) -> bool:
+        """Check if any engine is running."""
+        eng1_n1 = max(state.eng1_n1, state.eng1_n1_rpm / 163.84 if state.eng1_n1_rpm else 0)
+        eng2_n1 = max(state.eng2_n1, state.eng2_n1_rpm / 163.84 if state.eng2_n1_rpm else 0)
+        return eng1_n1 > 15 or eng2_n1 > 15 or state.eng1_combustion or state.eng2_combustion
 
     def detect(self, state: FlightState) -> Phase:
-        on_ground = state.sim_on_ground
-        engines_running = state.eng1_running or state.eng2_running
-        both_engines = state.eng1_running and state.eng2_running
-        parking_brake = state.parking_brake
+        """Check if we should advance to the next phase. Never goes backward."""
+        engines_running = self._engines_running(state)
         ground_speed = state.ground_velocity
-        vertical_speed = state.vertical_speed
-        altitude_agl = state.altitude_agl
-        gear_down = state.gear_handle_position
+        on_ground = state.sim_on_ground
 
-        if on_ground:
-            if self._was_airborne:
-                # We just landed
-                if ground_speed < 5:
-                    if not engines_running:
-                        self._was_airborne = False
-                        if parking_brake:
-                            return Phase.PARKING
-                        return Phase.SECURING
-                    return Phase.AFTER_LANDING
-                return Phase.AFTER_LANDING
+        # State machine - only forward transitions
+        if self._current_phase == Phase.COCKPIT_PREPARATION:
+            # Advance when beacon on (ready for pushback)
+            if state.light_beacon:
+                self._current_phase = Phase.BEFORE_START
 
-            # On ground, haven't been airborne yet (or reset)
-            if not engines_running:
-                if parking_brake:
-                    return Phase.COCKPIT_PREPARATION
-                return Phase.PARKING
+        elif self._current_phase == Phase.BEFORE_START:
+            # Advance when engines start
+            if engines_running:
+                self._current_phase = Phase.AFTER_START
 
-            if engines_running and parking_brake:
-                return Phase.AFTER_START
+        elif self._current_phase == Phase.AFTER_START:
+            # Advance when taxi speed reached
+            if ground_speed >= 10:
+                self._current_phase = Phase.TAXI
 
-            if engines_running and not parking_brake:
-                if ground_speed < 5:
-                    return Phase.BEFORE_START
-                if ground_speed < 30:
-                    return Phase.TAXI
-                # High ground speed = takeoff roll
-                self._was_airborne = True
-                return Phase.TAKEOFF_ROLL
+        elif self._current_phase == Phase.TAXI:
+            # Advance when landing lights on (entering runway)
+            if state.light_landing:
+                self._current_phase = Phase.LINE_UP
 
-            return Phase.TAXI
+        elif self._current_phase == Phase.LINE_UP:
+            # Advance when airborne
+            if not on_ground:
+                self._current_phase = Phase.AFTER_TAKEOFF
 
-        else:
-            # Airborne
-            self._was_airborne = True
+        elif self._current_phase == Phase.AFTER_TAKEOFF:
+            # Advance when reaching cruise altitude (above 10,000 ft MSL and level)
+            if state.altitude_msl > 10000 and abs(state.vertical_speed) < 500:
+                self._current_phase = Phase.CRUISE
 
-            if vertical_speed > 500:
-                return Phase.CLIMB
+        elif self._current_phase == Phase.CRUISE:
+            # Advance when descending below 10,000 ft MSL
+            # Sanity check: must have valid altitude (> 0) to prevent glitchy readings
+            if state.altitude_msl > 0 and state.altitude_msl < 10000:
+                self._current_phase = Phase.APPROACH
 
-            if vertical_speed < -500:
-                if altitude_agl < 3000 or gear_down:
-                    return Phase.APPROACH
-                return Phase.DESCENT
+        elif self._current_phase == Phase.APPROACH:
+            # Advance when below 1000 ft AGL (use AGL for final approach)
+            if state.altitude_agl < 1000:
+                self._current_phase = Phase.LANDING
 
-            # Level flight
-            if altitude_agl < 3000:
-                return Phase.APPROACH
+        elif self._current_phase == Phase.LANDING:
+            # Advance when on ground and slowed down
+            if on_ground and ground_speed < 30:
+                self._current_phase = Phase.AFTER_LANDING
 
-            return Phase.CRUISE
+        elif self._current_phase == Phase.AFTER_LANDING:
+            # Advance when stopped and engines off
+            if ground_speed < 5 and not engines_running:
+                self._current_phase = Phase.PARKING
+
+        elif self._current_phase == Phase.PARKING:
+            # Advance when securing (manual or auto)
+            pass  # Stay here until manual advance
+
+        elif self._current_phase == Phase.SECURING:
+            # Final state
+            pass
+
+        return self._current_phase
 
     def reset(self):
-        """Reset the detector state."""
-        self._was_airborne = False
-        self._last_phase = Phase.COCKPIT_PREPARATION
+        """Reset to initial state."""
+        self._current_phase = Phase.COCKPIT_PREPARATION
+
+    def set_phase(self, phase: Phase):
+        """Manually set the phase (for manual override)."""
+        self._current_phase = phase
+
+    def sync_to_phase(self, phase: Phase):
+        """Alias for set_phase - sync detector to a manually selected phase."""
+        self._current_phase = phase
 
 
 def get_next_checklist_phase(current: Phase) -> Optional[Phase]:
