@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Optional, Callable, Any
 
-from .flight_state import FlightState
+from .flight_state import FlightState, N1_RPM_SCALE, N1_RUNNING_THRESHOLD
 from .config import config
 
 logger = logging.getLogger(__name__)
@@ -173,12 +173,16 @@ class SimConnectClient:
             loop = asyncio.get_event_loop()
             try:
                 state = await loop.run_in_executor(None, self._poll_state)
-
-                if self._state_callback:
-                    await self._state_callback(state)
-
             except Exception as e:
-                logger.error(f"Polling error: {e}")
+                logger.error(f"SimConnect polling error: {e}")
+                await asyncio.sleep(poll_interval)
+                continue
+
+            if self._state_callback:
+                try:
+                    await self._state_callback(state)
+                except Exception as e:
+                    logger.error(f"State callback error: {e}", exc_info=True)
 
             await asyncio.sleep(poll_interval)
 
@@ -197,13 +201,13 @@ class SimConnectClient:
         """Check if an engine is running using multiple detection methods."""
         if engine == 1:
             n1_pct = self._state.eng1_n1
-            n1_rpm = self._state.eng1_n1_rpm / 163.84 if self._state.eng1_n1_rpm else 0
+            n1_rpm = self._state.eng1_n1_rpm / N1_RPM_SCALE if self._state.eng1_n1_rpm else 0
             combustion = self._state.eng1_combustion
         else:
             n1_pct = self._state.eng2_n1
-            n1_rpm = self._state.eng2_n1_rpm / 163.84 if self._state.eng2_n1_rpm else 0
+            n1_rpm = self._state.eng2_n1_rpm / N1_RPM_SCALE if self._state.eng2_n1_rpm else 0
             combustion = self._state.eng2_combustion
-        return max(n1_pct, n1_rpm) > 15 or combustion
+        return max(n1_pct, n1_rpm) > N1_RUNNING_THRESHOLD or combustion
 
     def _engines_running(self, both: bool = False) -> bool:
         """Check if engines are running (both or any)."""

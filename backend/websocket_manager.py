@@ -35,18 +35,22 @@ class WebSocketManager:
 
         message_json = json.dumps(message)
 
+        # Snapshot connections under lock, then send outside lock
         async with self._lock:
-            dead_connections = set()
+            connections = set(self._connections)
 
-            for connection in self._connections:
-                try:
-                    await connection.send_text(message_json)
-                except Exception as e:
-                    logger.warning(f"Failed to send to WebSocket: {e}")
-                    dead_connections.add(connection)
+        dead_connections = set()
+        for connection in connections:
+            try:
+                await connection.send_text(message_json)
+            except Exception as e:
+                logger.warning(f"Failed to send to WebSocket: {e}")
+                dead_connections.add(connection)
 
-            # Remove dead connections
-            self._connections -= dead_connections
+        # Re-acquire lock to remove dead connections
+        if dead_connections:
+            async with self._lock:
+                self._connections -= dead_connections
 
     async def send_state_update(self, connected: bool, flight_state: dict | None,
                                  checklist_state: dict, auto_transition: bool = True,

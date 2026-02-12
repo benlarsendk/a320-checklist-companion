@@ -27,7 +27,7 @@ class SettingsManager:
     def __init__(self, settings_file: Optional[Path] = None):
         self._settings_file = settings_file or config.SETTINGS_FILE
         self._settings = Settings()
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._load()
 
     def _load(self):

@@ -2,6 +2,17 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel
 
+# Named constants for magic numbers
+N1_RPM_SCALE = 163.84
+N1_RUNNING_THRESHOLD = 15
+CRUISE_ALT_THRESHOLD = 10000
+APPROACH_AGL_THRESHOLD = 1000
+TAXI_SPEED_KTS = 10
+LANDING_SPEED_KTS = 30
+PARKING_SPEED_KTS = 5
+LEVEL_VS_THRESHOLD = 500
+DESCENT_VS_THRESHOLD = -500
+
 
 class Phase(str, Enum):
     # Departure phases
@@ -33,6 +44,7 @@ CHECKLIST_PHASES = [
     Phase.LINE_UP,
     Phase.AFTER_TAKEOFF,
     Phase.CRUISE,
+    Phase.DESCENT,
     Phase.APPROACH,
     Phase.LANDING,
     Phase.AFTER_LANDING,
@@ -126,9 +138,9 @@ class PhaseDetector:
 
     def _engines_running(self, state: FlightState) -> bool:
         """Check if any engine is running."""
-        eng1_n1 = max(state.eng1_n1, state.eng1_n1_rpm / 163.84 if state.eng1_n1_rpm else 0)
-        eng2_n1 = max(state.eng2_n1, state.eng2_n1_rpm / 163.84 if state.eng2_n1_rpm else 0)
-        return eng1_n1 > 15 or eng2_n1 > 15 or state.eng1_combustion or state.eng2_combustion
+        eng1_n1 = max(state.eng1_n1, state.eng1_n1_rpm / N1_RPM_SCALE if state.eng1_n1_rpm else 0)
+        eng2_n1 = max(state.eng2_n1, state.eng2_n1_rpm / N1_RPM_SCALE if state.eng2_n1_rpm else 0)
+        return eng1_n1 > N1_RUNNING_THRESHOLD or eng2_n1 > N1_RUNNING_THRESHOLD or state.eng1_combustion or state.eng2_combustion
 
     def detect(self, state: FlightState) -> Phase:
         """Check if we should advance to the next phase. Never goes backward."""
@@ -149,7 +161,7 @@ class PhaseDetector:
 
         elif self._current_phase == Phase.AFTER_START:
             # Advance when taxi speed reached
-            if ground_speed >= 10:
+            if ground_speed >= TAXI_SPEED_KTS:
                 self._current_phase = Phase.TAXI
 
         elif self._current_phase == Phase.TAXI:
@@ -164,28 +176,32 @@ class PhaseDetector:
 
         elif self._current_phase == Phase.AFTER_TAKEOFF:
             # Advance when reaching cruise altitude (above 10,000 ft MSL and level)
-            if state.altitude_msl > 10000 and abs(state.vertical_speed) < 500:
+            if state.altitude_msl > CRUISE_ALT_THRESHOLD and abs(state.vertical_speed) < LEVEL_VS_THRESHOLD:
                 self._current_phase = Phase.CRUISE
 
         elif self._current_phase == Phase.CRUISE:
-            # Advance when descending below 10,000 ft MSL
-            # Sanity check: must have valid altitude (> 0) to prevent glitchy readings
-            if state.altitude_msl > 0 and state.altitude_msl < 10000:
+            # Advance to descent when descending and still above 10,000 ft
+            if state.vertical_speed < DESCENT_VS_THRESHOLD and state.altitude_msl > CRUISE_ALT_THRESHOLD:
+                self._current_phase = Phase.DESCENT
+
+        elif self._current_phase == Phase.DESCENT:
+            # Advance to approach when descending below 10,000 ft MSL
+            if state.altitude_msl > 0 and state.altitude_msl < CRUISE_ALT_THRESHOLD:
                 self._current_phase = Phase.APPROACH
 
         elif self._current_phase == Phase.APPROACH:
             # Advance when below 1000 ft AGL (use AGL for final approach)
-            if state.altitude_agl < 1000:
+            if state.altitude_agl < APPROACH_AGL_THRESHOLD:
                 self._current_phase = Phase.LANDING
 
         elif self._current_phase == Phase.LANDING:
             # Advance when on ground and slowed down
-            if on_ground and ground_speed < 30:
+            if on_ground and ground_speed < LANDING_SPEED_KTS:
                 self._current_phase = Phase.AFTER_LANDING
 
         elif self._current_phase == Phase.AFTER_LANDING:
             # Advance when stopped and engines off
-            if ground_speed < 5 and not engines_running:
+            if ground_speed < PARKING_SPEED_KTS and not engines_running:
                 self._current_phase = Phase.PARKING
 
         elif self._current_phase == Phase.PARKING:

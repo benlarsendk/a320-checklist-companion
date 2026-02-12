@@ -1,6 +1,7 @@
 """SimBrief API client for fetching flight plans."""
 
 import logging
+import re
 from typing import Optional
 
 import httpx
@@ -108,7 +109,7 @@ class SimBriefClient:
             raise SimBriefError("Username is required")
 
         try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 response = await client.get(
                     SIMBRIEF_API_URL,
                     params={"username": username, "json": "1"},
@@ -226,8 +227,6 @@ class SimBriefClient:
             return 0
 
         # Look for Q#### (hPa) or A#### (inHg)
-        import re
-
         # QNH in hPa (e.g., Q1013)
         match = re.search(r"Q(\d{4})", metar)
         if match:

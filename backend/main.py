@@ -408,7 +408,12 @@ async def websocket_endpoint(websocket: WebSocket):
             msg_data = data.get("data", {})
 
             if msg_type == "check_item":
-                checklist_manager.toggle_item(msg_data.get("phase"), msg_data.get("item_id"))
+                phase = msg_data.get("phase")
+                item_id = msg_data.get("item_id")
+                if not isinstance(phase, str) or not isinstance(item_id, str):
+                    logger.warning(f"Invalid check_item message: phase={phase!r}, item_id={item_id!r}")
+                    continue
+                checklist_manager.toggle_item(phase, item_id)
                 await websocket_manager.send_state_update(
                     connected=simconnect.connected,
                     flight_state=simconnect.state.model_dump() if simconnect.connected else None,
@@ -506,6 +511,7 @@ async def get_network_info():
     try:
         # Get local IP by connecting to an external address (doesn't actually connect)
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(2)
         s.connect(("8.8.8.8", 80))
         local_ip = s.getsockname()[0]
         s.close()

@@ -21,6 +21,7 @@ def get_local_ip():
     """Get the local network IP address."""
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(2)
         s.connect(("8.8.8.8", 80))
         ip = s.getsockname()[0]
         s.close()
@@ -31,12 +32,17 @@ def get_local_ip():
 
 def run_server():
     """Run the FastAPI server in a background thread."""
-    uvicorn.run(
-        fastapi_app,
-        host=config.HOST,
-        port=config.PORT,
-        log_level="warning",  # Quieter logging for desktop app
-    )
+    try:
+        uvicorn.run(
+            fastapi_app,
+            host=config.HOST,
+            port=config.PORT,
+            log_level="warning",  # Quieter logging for desktop app
+        )
+    except OSError as e:
+        print(f"Error: Could not start server on port {config.PORT}.")
+        print(f"  Another instance may already be running. ({e})")
+        sys.exit(1)
 
 
 def wait_for_server(timeout=10):

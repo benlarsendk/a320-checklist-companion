@@ -89,6 +89,21 @@
         ]
       }
     ],
+    "descent": [
+      {
+        "id": "descent",
+        "title": "DESCENT",
+        "trigger": "Top of descent reached",
+        "items": [
+          {"id": "landing_data", "challenge": "Landing Data", "response": "CONFIRMED", "verify": null},
+          {"id": "approach_briefing", "challenge": "Approach Briefing", "response": "CONFIRMED", "verify": null},
+          {"id": "ecam_status_desc", "challenge": "ECAM Status", "response": "CHECKED", "verify": null},
+          {"id": "seat_belts_desc", "challenge": "Seat Belts", "response": "ON", "verify": {"var": "CABIN_SEATBELTS_ALERT_SWITCH", "condition": "eq", "value": true}},
+          {"id": "landing_elev", "challenge": "Landing Elevation", "response": "SET", "verify": null},
+          {"id": "baro_ref_desc", "challenge": "Baro Reference", "response": "___SET (BOTH)", "verify": null}
+        ]
+      }
+    ],
     "arrival": [
       {
         "id": "approach",

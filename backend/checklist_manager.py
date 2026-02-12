@@ -1,3 +1,4 @@
+import html
 import json
 import logging
 import re
@@ -81,12 +82,16 @@ class Checklist:
 class ChecklistManager:
     """Manages all checklists and their state."""
 
+    # Maximum phase history entries to retain
+    _MAX_PHASE_HISTORY = 20
+
     def __init__(self, training_mode: bool = False):
         self.checklists: dict[str, Checklist] = {}
         self.current_phase: Phase = Phase.COCKPIT_PREPARATION
         self.phase_mode: str = "auto"  # "auto" or "manual"
         self.phase_history: list[str] = []
         self.training_mode: bool = training_mode
+        self._state_version: int = 0
         self._load_checklists()
 
     def _load_checklists(self):
@@ -95,26 +100,19 @@ class ChecklistManager:
         try:
             with open(checklist_file, "r") as f:
                 data = json.load(f)
+        except FileNotFoundError:
+            logger.error(f"Checklist file not found: {checklist_file}")
+            return
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in checklist file {checklist_file}: {e}")
+            return
 
-            # Load departure checklists
-            for checklist_data in data["phases"].get("departure", []):
-                checklist = Checklist(checklist_data)
-                self.checklists[checklist.id] = checklist
-
-            # Load after takeoff checklists
-            for checklist_data in data["phases"].get("after_takeoff", []):
-                checklist = Checklist(checklist_data)
-                self.checklists[checklist.id] = checklist
-
-            # Load cruise checklists
-            for checklist_data in data["phases"].get("cruise", []):
-                checklist = Checklist(checklist_data)
-                self.checklists[checklist.id] = checklist
-
-            # Load arrival checklists
-            for checklist_data in data["phases"].get("arrival", []):
-                checklist = Checklist(checklist_data)
-                self.checklists[checklist.id] = checklist
+        try:
+            # Load all phase sections
+            for section in ("departure", "after_takeoff", "cruise", "descent", "arrival"):
+                for checklist_data in data["phases"].get(section, []):
+                    checklist = Checklist(checklist_data)
+                    self.checklists[checklist.id] = checklist
 
             mode_str = "training" if self.training_mode else "normal"
             logger.info(f"Loaded {len(self.checklists)} checklists ({mode_str} mode)")
@@ -148,7 +146,11 @@ class ChecklistManager:
         if self.current_phase != phase:
             if record_history and self.current_phase.value not in self.phase_history:
                 self.phase_history.append(self.current_phase.value)
+                # Cap phase history size
+                if len(self.phase_history) > self._MAX_PHASE_HISTORY:
+                    self.phase_history = self.phase_history[-self._MAX_PHASE_HISTORY:]
             self.current_phase = phase
+            self._state_version += 1
             logger.info(f"Phase changed to: {phase.value}")
 
     def next_phase(self) -> bool:
@@ -176,6 +178,7 @@ class ChecklistManager:
             item = checklist.get_item(item_id)
             if item:
                 item.checked = True
+                self._state_version += 1
                 return True
         return False
 
@@ -186,6 +189,7 @@ class ChecklistManager:
             item = checklist.get_item(item_id)
             if item:
                 item.checked = False
+                self._state_version += 1
                 return True
         return False
 
@@ -196,6 +200,7 @@ class ChecklistManager:
             item = checklist.get_item(item_id)
             if item:
                 item.checked = not item.checked
+                self._state_version += 1
                 return True
         return False
 
@@ -206,15 +211,18 @@ class ChecklistManager:
         self.current_phase = Phase.COCKPIT_PREPARATION
         self.phase_mode = "auto"
         self.phase_history = []
+        self._state_version += 1
         logger.info("All checklists reset")
 
     def update_verification(self, var_name: str, value: Any):
         """Update auto-verification status based on SimConnect variable."""
+        changed = False
         for checklist in self.checklists.values():
             for item in checklist.items:
                 if item.verify and item.verify.get("var") == var_name:
                     condition = item.verify.get("condition")
                     expected = item.verify.get("value")
+                    old_verified = item.verified
 
                     if condition == "eq":
                         item.verified = (value == expected)
@@ -226,6 +234,11 @@ class ChecklistManager:
                         item.verified = (value > expected)
                     elif condition == "lt":
                         item.verified = (value < expected)
+
+                    if item.verified != old_verified:
+                        changed = True
+        if changed:
+            self._state_version += 1
 
     def get_all_checklists(self) -> dict:
         """Get all checklists as a dict."""
@@ -243,6 +256,7 @@ class ChecklistManager:
             "phase_mode": self.phase_mode,
             "checklist": current_checklist.to_dict() if current_checklist else None,
             "phase_history": self.phase_history,
+            "state_version": self._state_version,
         }
 
     def inject_flight_plan(self, flight_plan: "FlightPlan"):
@@ -267,6 +281,11 @@ class ChecklistManager:
                 "units": "hPa",
             },
             "baro_ref_ldg": {
+                "value": flight_plan.dest_qnh,
+                "type": "baro",
+                "units": "hPa",
+            },
+            "baro_ref_desc": {
                 "value": flight_plan.dest_qnh,
                 "type": "baro",
                 "units": "hPa",
@@ -304,6 +323,7 @@ class ChecklistManager:
                     display_val = str(sb_data["value"])
 
                 # Wrap in span for styling (simbrief-value class)
+                display_val = html.escape(str(display_val))
                 styled_val = f'<span class="simbrief-value">{display_val}</span>'
                 item.response = item.response_template.replace("___", styled_val)
 

@@ -5,6 +5,11 @@
 class ChecklistApp {
     constructor() {
         this.ws = null;
+        this._reconnectDelay = 2000;
+        this._maxReconnectDelay = 30000;
+        this._justReconnected = false;
+        this._lastStateVersion = -1;
+        this._renderedPhase = null;
         this.state = {
             connected: false,
             phase: 'cockpit_preparation',
@@ -13,6 +18,7 @@ class ChecklistApp {
             checklist: null,
             flight_state: null,
             flight_plan: null,
+            state_version: 0,
         };
 
         this.elements = {
@@ -66,6 +72,8 @@ class ChecklistApp {
 
         this.ws.onopen = () => {
             console.log('WebSocket connected');
+            this._reconnectDelay = 2000;
+            this._justReconnected = true;
         };
 
         this.ws.onmessage = (event) => {
@@ -78,8 +86,10 @@ class ChecklistApp {
         };
 
         this.ws.onclose = () => {
-            console.log('WebSocket disconnected, reconnecting...');
-            setTimeout(() => this.connectWebSocket(), 2000);
+            console.log(`WebSocket disconnected, reconnecting in ${this._reconnectDelay / 1000}s...`);
+            const delay = this._reconnectDelay;
+            this._reconnectDelay = Math.min(this._reconnectDelay * 2, this._maxReconnectDelay);
+            setTimeout(() => this.connectWebSocket(), delay);
         };
 
         this.ws.onerror = (error) => {
@@ -94,20 +104,25 @@ class ChecklistApp {
     }
 
     updateState(data) {
-        const prevChecklist = JSON.stringify(this.state.checklist);
         const prevPhase = this.state.phase;
+        const prevVersion = this._lastStateVersion;
 
         this.state = { ...this.state, ...data };
 
-        // Only re-render checklist if it actually changed
-        const newChecklist = JSON.stringify(this.state.checklist);
-        const checklistChanged = prevChecklist !== newChecklist || prevPhase !== this.state.phase;
+        // Use state_version counter to detect checklist changes (avoids JSON.stringify)
+        const newVersion = this.state.state_version ?? 0;
+        const checklistChanged = newVersion !== prevVersion || prevPhase !== this.state.phase;
+        this._lastStateVersion = newVersion;
+
+        // After reconnect, force a full re-render to reconcile any optimistic UI divergence
+        const forceFullRender = this._justReconnected;
+        this._justReconnected = false;
 
         this.renderConnectionStatus();
         this.renderPhaseHeader();
         this.renderFlightPlanBanner();
-        if (checklistChanged) {
-            this.renderChecklist();
+        if (forceFullRender || checklistChanged) {
+            this.renderChecklist(forceFullRender || prevPhase !== this.state.phase);
         }
         this.renderFlightData();
     }
@@ -154,8 +169,12 @@ class ChecklistApp {
 
         if (flight_plan && flight_plan.origin) {
             banner.classList.remove('hidden');
-            this.elements.bannerRoute.innerHTML =
-                `${flight_plan.origin} &#8594; ${flight_plan.destination}`;
+            // Use textContent for user-provided values to prevent XSS
+            const routeEl = this.elements.bannerRoute;
+            routeEl.textContent = '';
+            routeEl.appendChild(document.createTextNode(flight_plan.origin));
+            routeEl.appendChild(document.createTextNode(' \u2192 '));
+            routeEl.appendChild(document.createTextNode(flight_plan.destination));
             this.elements.bannerFuel.textContent =
                 `FUEL: ${flight_plan.fuel_block.toLocaleString()} ${flight_plan.fuel_units}`;
         } else {
@@ -163,16 +182,42 @@ class ChecklistApp {
         }
     }
 
-    renderChecklist() {
+    renderChecklist(fullRender = false) {
         const { checklist, phase } = this.state;
         const container = this.elements.checklistItems;
 
         if (!checklist || !checklist.items) {
             container.innerHTML = '<li class="checklist-empty">No checklist loaded</li>';
+            this._renderedPhase = null;
             return;
         }
 
-        container.innerHTML = checklist.items.map(item => this.renderChecklistItem(item, phase)).join('');
+        // Full render on phase change, first render, or forced reconciliation
+        if (fullRender || this._renderedPhase !== phase) {
+            container.innerHTML = checklist.items.map(item => this.renderChecklistItem(item, phase)).join('');
+            this._renderedPhase = phase;
+            return;
+        }
+
+        // Smart DOM patch: update only changed items in-place
+        for (const item of checklist.items) {
+            const el = container.querySelector(`[data-item-id="${item.id}"]`);
+            if (!el) {
+                // Item not found - fall back to full render
+                container.innerHTML = checklist.items.map(i => this.renderChecklistItem(i, phase)).join('');
+                return;
+            }
+
+            // Update checked state
+            el.classList.toggle('checked', item.checked);
+            el.classList.toggle('verified', item.verified === true);
+            el.classList.toggle('not-verified', item.verified === false);
+
+            const checkbox = el.querySelector('.item-checkbox');
+            if (checkbox) {
+                checkbox.innerHTML = item.checked ? '&#10003;' : '';
+            }
+        }
     }
 
     setupChecklistClickHandler() {
